@@ -1,72 +1,64 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "DoubleData API",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#006C49",
+    "light": "#007C55",
+    "dark": "#8DF0BF"
   },
   "favicon": "/favicon.svg",
-  "navigation": {
-    "pages": [
-      {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
   },
-  "navbar": {
-    "links": [
+  "api": {
+    "playground": {
+      "display": "interactive",
+      "proxy": true
+    },
+    "url": "full",
+    "examples": {
+      "languages": ["curl", "javascript", "go", "python"],
+      "defaults": "required",
+      "prefill": true,
+      "autogenerate": true
+    }
+  },
+  "navigation": {
+    "groups": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "group": "Get started",
+        "pages": ["index", "quickstart", "authentication"]
+      },
+      {
+        "group": "Workflows",
+        "pages": ["guides/rotations", "guides/ip-authorization", "errors"]
+      },
+      {
+        "group": "API reference",
+        "openapi": "openapi.json",
+        "pages": [
+          "api-reference/introduction",
+          "GET /isp/subscriptions",
+          "GET /isp/subscriptions/{subscriptionId}/proxies",
+          "POST /isp/subscriptions/{subscriptionId}/rotations",
+          "GET /isp/rotations/{rotationId}",
+          "GET /isp/subscriptions/{subscriptionId}/ip-authorization",
+          "PUT /isp/subscriptions/{subscriptionId}/ip-authorization",
+          "DELETE /isp/subscriptions/{subscriptionId}/ip-authorization"
+        ]
       }
-    ],
+    ]
+  },
+  "navbar": {
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "href": "https://app.proxy.doubledata.com/dashboard"
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
   }
 }

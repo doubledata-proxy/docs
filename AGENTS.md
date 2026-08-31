@@ -1,33 +1,28 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
-
 # Documentation project instructions
 
 ## About this project
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Use the Mintlify MCP server, `https://mcp.mintlify.com`, to edit content and settings via MCP
-- Use the Mintlify docs MCP server, `https://www.mintlify.com/docs/mcp`, to query information about using Mintlify via MCP
+- This Mintlify site documents the public DoubleData Static ISP API.
+- Configuration lives in `docs.json` and the API contract lives in `openapi.json`.
+- The public base URL is `https://app.proxy.doubledata.com/api/v1`.
 
 ## Terminology
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+- Use "Static ISP proxy" for the product and "rotation" for replacing selected IPs.
+- Use "IP authorization" for the one source IP allowed on a subscription.
+- Use "rotation unit" for one confirmed IP replacement.
 
-## Style preferences
+## Style
 
-{/* Add any project-specific style rules below */}
-
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+- Use active voice and address the reader as "you".
+- Keep sentences concise and headings in sentence case.
+- Use code formatting for fields, paths, commands, status codes, and literal values.
+- Treat all mutation examples as live production operations and place a warning before them.
 
 ## Content boundaries
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+- Document only the public bearer-token API under `/api/v1`.
+- Never document network suppliers, upstream accounts, internal service keys, internal headers, internal identifiers, or administrator-only service endpoints.
+- Never ask clients to send an idempotency key or organization ID.
+- Keep operational failures customer-safe. Do not expose implementation details in errors or examples.
+- Treat API keys and proxy credentials as secrets.
