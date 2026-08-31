@@ -1,0 +1,31 @@
+---
+title: "Authentication"
+description: "Authenticate public API requests with your organization API key."
+---
+
+Each organization has one active API key. An organization administrator can create the first key or regenerate the existing key from the DoubleData dashboard.
+
+Send the key as a bearer token on every request:
+
+```http
+Authorization: Bearer <your_api_key>
+```
+
+```bash
+curl --request GET \
+  --url https://app.proxy.doubledata.com/api/v1/isp/subscriptions \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
+```
+
+<Warning>
+  Regenerating the organization key invalidates the previous key immediately. Update every client that uses the old key.
+</Warning>
+
+## Keep the key secure
+
+- Store it in a secret manager or protected environment variable.
+- Never place it in a query string, client-side application, log, or source repository.
+- Do not send an organization ID. The key determines which resources you can access.
+- Treat a `401 unauthorized` response as a missing, invalid, or revoked key.
+
+The API returns `Cache-Control: no-store` and an `X-Request-ID` header. Include the request ID when you contact support about a failed request.

@@ -1,47 +1,66 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "Authenticate and make your first read-only API request."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+This quickstart lists the active Static ISP subscriptions available to your organization.
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+## Before you begin
 
-## Prerequisites
-
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+You need an active DoubleData organization, an active Static ISP subscription, and your organization's API key. An organization administrator creates the key in the dashboard.
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Store your API key">
+    Keep the key in an environment variable so it does not appear directly in commands or source files.
 
     ```bash
-    npm install your-package
+    export DOUBLEDATA_API_KEY="your_api_key"
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+
+  <Step title="List active subscriptions">
+    Send the key in the `Authorization` header.
 
     ```bash
-    your-cli init
+    curl --request GET \
+      --url https://app.proxy.doubledata.com/api/v1/isp/subscriptions \
+      --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
     ```
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
 
-    ```bash
-    your-cli start
+  <Step title="Choose a subscription">
+    Save an `id` from the response for subscription-specific requests.
+
+    ```json
+    {
+      "subscriptions": [
+        {
+          "id": "25974f58-6a7a-4b0d-8dd7-a89133f50762",
+          "tier": "dedicated",
+          "countries": [{ "country": "US", "quantity": 2 }],
+          "status": "active",
+          "proxy_count": 2,
+          "current_period_start": "2026-08-01T00:00:00Z",
+          "current_period_end": "2026-09-01T00:00:00Z",
+          "rotations_total": 20,
+          "rotations_remaining": 14,
+          "rotations_reset_at": "2026-09-01T00:00:00Z",
+          "rotation_in_progress": false,
+          "ip_authorization": null
+        }
+      ]
+    }
     ```
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+`rotations_remaining` counts individual IP replacements, not requests. A successful five-IP rotation consumes five rotation units.
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Learn how the organization API key is managed.
+  </Card>
+  <Card title="Rotation workflow" icon="rotate" href="/guides/rotations">
+    Replace selected IPs and poll their status.
+  </Card>
+</CardGroup>

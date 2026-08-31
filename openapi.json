@@ -1,0 +1,899 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DoubleData Static ISP API",
+    "version": "1.0.0",
+    "description": "List active Static ISP subscriptions and proxies, rotate selected IPs asynchronously, and manage source-IP authorization.",
+    "license": {
+      "name": "Proprietary",
+      "identifier": "LicenseRef-Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://app.proxy.doubledata.com/api/v1",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Subscriptions",
+      "description": "Active Static ISP subscriptions and their connection records."
+    },
+    {
+      "name": "Rotations",
+      "description": "Asynchronous selected-IP rotation batches."
+    },
+    {
+      "name": "IP authorization",
+      "description": "The source IP authorized for a subscription."
+    }
+  ],
+  "paths": {
+    "/isp/subscriptions": {
+      "get": {
+        "operationId": "listISPSubscriptions",
+        "summary": "List active subscriptions",
+        "description": "Returns the active Static ISP subscriptions available to your organization. Each subscription includes its current rotation allowance and IP authorization.",
+        "tags": ["Subscriptions"],
+        "responses": {
+          "200": {
+            "description": "Active subscriptions",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SubscriptionsResponse" },
+                "examples": {
+                  "active": {
+                    "summary": "An active subscription",
+                    "value": {
+                      "subscriptions": [
+                        {
+                          "id": "25974f58-6a7a-4b0d-8dd7-a89133f50762",
+                          "tier": "dedicated",
+                          "countries": [{ "country": "US", "quantity": 2 }],
+                          "status": "active",
+                          "proxy_count": 2,
+                          "current_period_start": "2026-08-01T00:00:00Z",
+                          "current_period_end": "2026-09-01T00:00:00Z",
+                          "rotations_total": 20,
+                          "rotations_remaining": 14,
+                          "rotations_reset_at": "2026-09-01T00:00:00Z",
+                          "rotation_in_progress": false,
+                          "ip_authorization": "192.0.2.40"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/isp/subscriptions/{subscriptionId}/proxies": {
+      "get": {
+        "operationId": "listISPProxies",
+        "summary": "List assigned proxies",
+        "description": "Returns every proxy currently assigned to the subscription, including complete connection credentials and rotation eligibility. Treat the returned credentials as secrets.",
+        "tags": ["Subscriptions"],
+        "parameters": [
+          { "$ref": "#/components/parameters/SubscriptionID" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assigned proxies",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProxiesResponse" },
+                "examples": {
+                  "assigned": {
+                    "value": {
+                      "proxies": [
+                        {
+                          "ip": "198.51.100.10",
+                          "port": 9000,
+                          "protocols": ["http", "socks5"],
+                          "username": "example-user",
+                          "password": "example-password",
+                          "country": "US",
+                          "valid": true,
+                          "assigned_at": "2026-08-31T12:00:00Z",
+                          "rotation_eligible": true
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/isp/subscriptions/{subscriptionId}/rotations": {
+      "post": {
+        "operationId": "createISPRotation",
+        "summary": "Rotate selected IPs",
+        "description": "Submits 1–100 unique active proxy IPs for asynchronous replacement. Each replacement keeps the country of its selected IP. This operation changes live production proxies. Poll the returned status URL before using replacement connection data.",
+        "tags": ["Rotations"],
+        "parameters": [
+          { "$ref": "#/components/parameters/SubscriptionID" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateRotationRequest" },
+              "examples": {
+                "selectedIPs": {
+                  "summary": "Two selected proxy IPs",
+                  "value": {
+                    "ips": ["198.51.100.10", "203.0.113.20"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Rotation accepted",
+            "headers": {
+              "Location": { "$ref": "#/components/headers/Location" },
+              "Retry-After": { "$ref": "#/components/headers/PollAfter" },
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AcceptedRotationResponse" },
+                "examples": {
+                  "accepted": {
+                    "value": {
+                      "rotation": {
+                        "id": "4f114166-bbf7-41fa-82b8-c398f7a19914",
+                        "status": "accepted",
+                        "requested_count": 2,
+                        "status_url": "/api/v1/isp/rotations/4f114166-bbf7-41fa-82b8-c398f7a19914"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/isp/rotations/{rotationId}": {
+      "get": {
+        "operationId": "getISPRotation",
+        "summary": "Get rotation status",
+        "description": "Returns an accepted rotation and its ordered results. Existing rotations return HTTP 200 even when the terminal status is `partially_succeeded` or `failed`.",
+        "tags": ["Rotations"],
+        "parameters": [
+          { "$ref": "#/components/parameters/RotationID" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current rotation status",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RotationResponse" },
+                "examples": {
+                  "processing": {
+                    "summary": "Processing",
+                    "value": {
+                      "rotation": {
+                        "id": "4f114166-bbf7-41fa-82b8-c398f7a19914",
+                        "subscription_id": "25974f58-6a7a-4b0d-8dd7-a89133f50762",
+                        "status": "processing",
+                        "requested_count": 2,
+                        "succeeded_count": 0,
+                        "failed_count": 0,
+                        "created_at": "2026-08-31T12:00:00Z"
+                      }
+                    }
+                  },
+                  "partial": {
+                    "summary": "Partially succeeded",
+                    "value": {
+                      "rotation": {
+                        "id": "4f114166-bbf7-41fa-82b8-c398f7a19914",
+                        "subscription_id": "25974f58-6a7a-4b0d-8dd7-a89133f50762",
+                        "status": "partially_succeeded",
+                        "requested_count": 2,
+                        "succeeded_count": 1,
+                        "failed_count": 1,
+                        "results": [
+                          {
+                            "old_ip": "198.51.100.10",
+                            "new_ip": "198.51.100.80",
+                            "new_port": 9200,
+                            "protocols": ["http", "socks5"],
+                            "username": "example-user",
+                            "password": "example-password",
+                            "country": "US",
+                            "valid": true,
+                            "assigned_at": "2026-08-31T12:05:00Z",
+                            "status": "succeeded"
+                          },
+                          {
+                            "old_ip": "203.0.113.20",
+                            "status": "failed",
+                            "error": {
+                              "code": "rotation_temporarily_unavailable",
+                              "message": "This proxy could not be rotated at this time. Please try again.",
+                              "retryable": true
+                            }
+                          }
+                        ],
+                        "created_at": "2026-08-31T12:00:00Z",
+                        "completed_at": "2026-08-31T12:05:00Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/isp/subscriptions/{subscriptionId}/ip-authorization": {
+      "get": {
+        "operationId": "getISPIPAuthorization",
+        "summary": "Get IP authorization",
+        "description": "Returns the subscription's authorized source IP, or `null` when no IP is authorized.",
+        "tags": ["IP authorization"],
+        "parameters": [
+          { "$ref": "#/components/parameters/SubscriptionID" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/AuthorizationSuccess" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      },
+      "put": {
+        "operationId": "putISPIPAuthorization",
+        "summary": "Set IP authorization",
+        "description": "Creates or replaces the subscription's authorized source IP. Sending the current value is a no-op success. This operation changes live production access.",
+        "tags": ["IP authorization"],
+        "parameters": [
+          { "$ref": "#/components/parameters/SubscriptionID" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuthorizationRequest" },
+              "examples": {
+                "sourceIP": {
+                  "value": { "ip": "192.0.2.40" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/AuthorizationSuccess" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteISPIPAuthorization",
+        "summary": "Remove IP authorization",
+        "description": "Removes the subscription's source-IP authorization. Repeating this operation when no IP is authorized also succeeds. This operation changes live production access.",
+        "tags": ["IP authorization"],
+        "parameters": [
+          { "$ref": "#/components/parameters/SubscriptionID" }
+        ],
+        "responses": {
+          "200": {
+            "description": "IP authorization removed",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthorizationResponse" },
+                "examples": {
+                  "removed": {
+                    "value": { "ip_authorization": null }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API key",
+        "description": "Your organization's active API key."
+      }
+    },
+    "parameters": {
+      "SubscriptionID": {
+        "name": "subscriptionId",
+        "in": "path",
+        "required": true,
+        "description": "The subscription's public UUID.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "RotationID": {
+        "name": "rotationId",
+        "in": "path",
+        "required": true,
+        "description": "The accepted rotation's UUID.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "headers": {
+      "RequestID": {
+        "description": "A request UUID to include when contacting support.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "CacheControl": {
+        "description": "Responses are not stored in shared or browser caches.",
+        "schema": {
+          "type": "string",
+          "const": "no-store"
+        }
+      },
+      "Location": {
+        "description": "The relative URL of the accepted rotation.",
+        "schema": {
+          "type": "string",
+          "example": "/api/v1/isp/rotations/4f114166-bbf7-41fa-82b8-c398f7a19914"
+        }
+      },
+      "PollAfter": {
+        "description": "Wait at least this many seconds before the first status poll.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "example": 2
+        }
+      },
+      "RateLimitRetryAfter": {
+        "description": "When present, wait at least this many seconds before retrying.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "schemas": {
+      "CountryQuantity": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["country", "quantity"],
+        "properties": {
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "description": "Two-letter country code.",
+            "example": "US"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 2
+          }
+        }
+      },
+      "Subscription": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "tier",
+          "countries",
+          "status",
+          "proxy_count",
+          "current_period_start",
+          "current_period_end",
+          "rotations_total",
+          "rotations_remaining",
+          "rotations_reset_at",
+          "rotation_in_progress",
+          "ip_authorization"
+        ],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "tier": { "type": "string", "minLength": 1 },
+          "countries": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CountryQuantity" }
+          },
+          "status": { "type": "string", "const": "active" },
+          "proxy_count": { "type": "integer", "minimum": 0 },
+          "current_period_start": { "type": "string", "format": "date-time" },
+          "current_period_end": { "type": "string", "format": "date-time" },
+          "rotations_total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Rotation units available for the current subscription period before use."
+          },
+          "rotations_remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Individual IP replacements still available in the current period."
+          },
+          "rotations_reset_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the current rotation allowance period ends."
+          },
+          "rotation_in_progress": {
+            "type": "boolean",
+            "description": "Whether a rotation is currently active for this subscription."
+          },
+          "ip_authorization": {
+            "type": ["string", "null"],
+            "format": "ipv4",
+            "description": "The currently authorized source IP, or null."
+          }
+        }
+      },
+      "SubscriptionsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["subscriptions"],
+        "properties": {
+          "subscriptions": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Subscription" }
+          }
+        }
+      },
+      "Proxy": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ip",
+          "port",
+          "protocols",
+          "username",
+          "password",
+          "country",
+          "valid",
+          "assigned_at",
+          "rotation_eligible"
+        ],
+        "properties": {
+          "ip": { "type": "string", "format": "ipv4" },
+          "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "protocols": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "username": { "type": "string", "minLength": 1 },
+          "password": { "type": "string", "minLength": 1 },
+          "country": { "type": "string", "pattern": "^[A-Z]{2}$" },
+          "valid": { "type": "boolean" },
+          "assigned_at": { "type": "string", "format": "date-time" },
+          "rotation_eligible": { "type": "boolean" }
+        }
+      },
+      "ProxiesResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["proxies"],
+        "properties": {
+          "proxies": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Proxy" }
+          }
+        }
+      },
+      "CreateRotationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ips"],
+        "properties": {
+          "ips": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "uniqueItems": true,
+            "description": "Unique public IPv4 addresses currently active in the subscription. Results preserve this order.",
+            "items": {
+              "type": "string",
+              "format": "ipv4"
+            }
+          }
+        }
+      },
+      "AcceptedRotation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "requested_count", "status_url"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "const": "accepted" },
+          "requested_count": { "type": "integer", "minimum": 1, "maximum": 100 },
+          "status_url": {
+            "type": "string",
+            "description": "Relative URL to poll for status."
+          }
+        }
+      },
+      "AcceptedRotationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rotation"],
+        "properties": {
+          "rotation": { "$ref": "#/components/schemas/AcceptedRotation" }
+        }
+      },
+      "SucceededRotationResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "old_ip",
+          "new_ip",
+          "new_port",
+          "protocols",
+          "username",
+          "password",
+          "country",
+          "valid",
+          "assigned_at",
+          "status"
+        ],
+        "properties": {
+          "old_ip": { "type": "string", "format": "ipv4" },
+          "new_ip": { "type": "string", "format": "ipv4" },
+          "new_port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "protocols": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "username": { "type": "string", "minLength": 1 },
+          "password": { "type": "string", "minLength": 1 },
+          "country": { "type": "string", "pattern": "^[A-Z]{2}$" },
+          "valid": { "type": "boolean" },
+          "assigned_at": { "type": "string", "format": "date-time" },
+          "status": { "type": "string", "const": "succeeded" }
+        }
+      },
+      "RotationResultError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "retryable"],
+        "properties": {
+          "code": { "type": "string", "const": "rotation_temporarily_unavailable" },
+          "message": {
+            "type": "string",
+            "const": "This proxy could not be rotated at this time. Please try again."
+          },
+          "retryable": { "type": "boolean" }
+        }
+      },
+      "FailedRotationResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["old_ip", "status", "error"],
+        "properties": {
+          "old_ip": { "type": "string", "format": "ipv4" },
+          "status": { "type": "string", "const": "failed" },
+          "error": { "$ref": "#/components/schemas/RotationResultError" }
+        }
+      },
+      "RotationResult": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/SucceededRotationResult" },
+          { "$ref": "#/components/schemas/FailedRotationResult" }
+        ]
+      },
+      "Rotation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "subscription_id",
+          "status",
+          "requested_count",
+          "succeeded_count",
+          "failed_count",
+          "created_at"
+        ],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "subscription_id": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["accepted", "processing", "succeeded", "partially_succeeded", "failed"]
+          },
+          "requested_count": { "type": "integer", "minimum": 1, "maximum": 100 },
+          "succeeded_count": { "type": "integer", "minimum": 0 },
+          "failed_count": { "type": "integer", "minimum": 0 },
+          "results": {
+            "type": "array",
+            "description": "Ordered results corresponding to the submitted IP order. May be absent before the result mapping is available.",
+            "items": { "$ref": "#/components/schemas/RotationResult" }
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "completed_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RotationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rotation"],
+        "properties": {
+          "rotation": { "$ref": "#/components/schemas/Rotation" }
+        }
+      },
+      "AuthorizationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ip"],
+        "properties": {
+          "ip": {
+            "type": "string",
+            "format": "ipv4",
+            "description": "The public IPv4 address to authorize."
+          }
+        }
+      },
+      "AuthorizationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ip_authorization"],
+        "properties": {
+          "ip_authorization": {
+            "type": ["string", "null"],
+            "format": "ipv4"
+          }
+        }
+      },
+      "ErrorDetails": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ips": {
+            "type": "array",
+            "maxItems": 100,
+            "items": { "type": "string", "format": "ipv4" }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "request_id"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_request",
+              "invalid_ip_address",
+              "invalid_proxy_ip",
+              "duplicate_proxy_ip",
+              "unknown_proxy_ip",
+              "rotation_allowance_exhausted",
+              "rotation_in_progress",
+              "unauthorized",
+              "not_found",
+              "rate_limit_exceeded",
+              "temporarily_unavailable",
+              "internal_error"
+            ]
+          },
+          "message": { "type": "string", "minLength": 1 },
+          "details": { "$ref": "#/components/schemas/ErrorDetails" },
+          "request_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": {
+          "error": { "$ref": "#/components/schemas/Error" }
+        }
+      }
+    },
+    "responses": {
+      "AuthorizationSuccess": {
+        "description": "Current IP authorization",
+        "headers": {
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/AuthorizationResponse" },
+            "examples": {
+              "configured": { "value": { "ip_authorization": "192.0.2.40" } },
+              "notConfigured": { "value": { "ip_authorization": null } }
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "The ID, request body, or selected IPs are invalid.",
+        "headers": {
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "unknownIP": {
+                "value": {
+                  "error": {
+                    "code": "unknown_proxy_ip",
+                    "message": "One or more IPs are not active in this subscription.",
+                    "details": { "ips": ["198.51.100.10"] },
+                    "request_id": "ad2f824c-46bc-47c6-b276-2bb51a3083b1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "The API key is missing, invalid, or revoked.",
+        "headers": {
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "unauthorized": {
+                "value": {
+                  "error": {
+                    "code": "unauthorized",
+                    "message": "A valid API key is required.",
+                    "request_id": "ad2f824c-46bc-47c6-b276-2bb51a3083b1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The requested resource was not found.",
+        "headers": {
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Another rotation is already in progress for the subscription.",
+        "headers": {
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "The request rate limit or rotation allowance was reached.",
+        "headers": {
+          "Retry-After": { "$ref": "#/components/headers/RateLimitRetryAfter" },
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "The request could not be completed.",
+        "headers": {
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "The API is unavailable at the moment.",
+        "headers": {
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      }
+    }
+  }
+}
