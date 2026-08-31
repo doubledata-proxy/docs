@@ -1,0 +1,62 @@
+---
+title: "Manage IP authorization"
+description: "Read, set, and remove the source IP authorized for a subscription."
+---
+
+Each Static ISP subscription can authorize one public IPv4 address for source-IP access.
+
+## Read the current authorization
+
+```bash
+curl --request GET \
+  --url "https://app.proxy.doubledata.com/api/v1/isp/subscriptions/${SUBSCRIPTION_ID}/ip-authorization" \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
+```
+
+The response contains the current address or `null`:
+
+```json
+{ "ip_authorization": "192.0.2.40" }
+```
+
+```json
+{ "ip_authorization": null }
+```
+
+## Set the authorized IP
+
+<Warning>
+  Setting a source IP changes live production access for this subscription. Confirm the address before sending the request.
+</Warning>
+
+```bash
+export SOURCE_IP="192.0.2.40"
+
+curl --request PUT \
+  --url "https://app.proxy.doubledata.com/api/v1/isp/subscriptions/${SUBSCRIPTION_ID}/ip-authorization" \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}" \
+  --header "Content-Type: application/json" \
+  --data "{\"ip\":\"${SOURCE_IP}\"}"
+```
+
+`PUT` creates or replaces the current address. Sending the already configured address succeeds without changing it.
+
+## Remove the authorized IP
+
+<Warning>
+  Removing the source IP may interrupt clients that depend on IP-based access.
+</Warning>
+
+```bash
+curl --request DELETE \
+  --url "https://app.proxy.doubledata.com/api/v1/isp/subscriptions/${SUBSCRIPTION_ID}/ip-authorization" \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
+```
+
+A successful delete returns:
+
+```json
+{ "ip_authorization": null }
+```
+
+You can safely repeat `DELETE` when no IP is configured.

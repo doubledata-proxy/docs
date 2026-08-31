@@ -1,0 +1,54 @@
+---
+title: "Errors and rate limits"
+description: "Handle public API errors, request IDs, and retry timing."
+---
+
+The API returns errors in one stable envelope:
+
+```json
+{
+  "error": {
+    "code": "unknown_proxy_ip",
+    "message": "One or more IPs are not active in this subscription.",
+    "details": { "ips": ["198.51.100.10"] },
+    "request_id": "ad2f824c-46bc-47c6-b276-2bb51a3083b1"
+  }
+}
+```
+
+`details` is present only when the API can identify specific input IPs. The `X-Request-ID` response header matches `error.request_id`. Include that value when contacting support.
+
+## Error codes
+
+| HTTP | Code | What to do |
+| --- | --- | --- |
+| `400` | `invalid_request` | Correct the ID, JSON body, IP format, or selection size. |
+| `400` | `invalid_ip_address` | Send one public IPv4 address for IP authorization. |
+| `400` | `invalid_proxy_ip` | Replace the IPs listed in `error.details.ips` with valid public IPv4 addresses. |
+| `400` | `duplicate_proxy_ip` | Remove duplicate IPs from the rotation request. |
+| `400` | `unknown_proxy_ip` | Refresh the subscription's proxy list and submit active IPs from that response. |
+| `401` | `unauthorized` | Supply the current organization API key as a bearer token. |
+| `404` | `not_found` | Check the resource ID and confirm it belongs to the current organization. |
+| `409` | `rotation_in_progress` | Poll the active rotation before submitting another subscription mutation. |
+| `429` | `rotation_allowance_exhausted` | Reduce the selection or wait until `rotations_reset_at`. |
+| `429` | `rate_limit_exceeded` | Wait for the `Retry-After` duration before retrying. |
+| `500` | `internal_error` | Retry later. Include `request_id` if the problem continues. |
+| `503` | `temporarily_unavailable` | Retry later with backoff. |
+
+`rotation_temporarily_unavailable` appears on an individual failed rotation result rather than as a request-level error. Check its `retryable` field before submitting that IP again.
+
+## Rate limits
+
+Limits apply per API key in 60-second windows:
+
+| Request class | Default limit | Operations |
+| --- | ---: | --- |
+| Read | 120 per minute | All `GET` requests |
+| Rotation | 10 per minute | Rotation `POST` |
+| Authorization | 20 per minute | Authorization `PUT` and `DELETE` |
+
+A rate-limit response includes `Retry-After` in seconds. Wait at least that long before retrying. Rotation acceptance also returns `Retry-After: 2` as the earliest recommended first poll.
+
+<Note>
+  A `429 rotation_allowance_exhausted` response describes the subscription's rotation units. It may not include `Retry-After`; use `rotations_reset_at` from the subscription instead.
+</Note>

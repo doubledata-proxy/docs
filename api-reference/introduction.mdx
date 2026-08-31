@@ -1,0 +1,27 @@
+---
+title: "API reference"
+description: "Explore and call every public DoubleData Static ISP API endpoint."
+---
+
+The reference pages are generated from the OpenAPI 3.1 contract. They include request schemas, response models, customer-safe errors, and examples in cURL, JavaScript, Go, and Python.
+
+## Base URL
+
+```text
+https://app.proxy.doubledata.com/api/v1
+```
+
+All requests require `Authorization: Bearer <your_api_key>`.
+
+<Warning>
+  The interactive playground calls the production API. `POST`, `PUT`, and `DELETE` requests can change live subscriptions, proxies, or access settings.
+</Warning>
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Create and protect your organization API key.
+  </Card>
+  <Card title="Errors and rate limits" icon="triangle-exclamation" href="/errors">
+    Handle stable codes, request IDs, and retry timing.
+  </Card>
+</CardGroup>

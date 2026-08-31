@@ -1,0 +1,124 @@
+---
+title: "Rotate selected IPs"
+description: "Replace up to 100 selected Static ISP proxy IPs and poll for results."
+---
+
+A rotation replaces only the active proxy IPs you submit. Each replacement stays in the same country as its selected IP.
+
+## Before you rotate
+
+List the subscription's proxies and select records where `rotation_eligible` is `true`:
+
+```bash
+export SUBSCRIPTION_ID="25974f58-6a7a-4b0d-8dd7-a89133f50762"
+
+curl --request GET \
+  --url "https://app.proxy.doubledata.com/api/v1/isp/subscriptions/${SUBSCRIPTION_ID}/proxies" \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
+```
+
+Also check `rotations_remaining` on the subscription. The allowance must cover the entire selection when you submit it.
+
+## Create and poll a rotation
+
+<Warning>
+  `POST /isp/subscriptions/{subscriptionId}/rotations` changes live production proxies. Existing connections through replaced IPs may stop working. Save and deploy the returned connection data.
+</Warning>
+
+<Steps>
+  <Step title="Submit the exact IPs">
+    Send 1–100 unique public IPv4 addresses that are active in the same subscription. Replace the example values with IPs returned by your proxy-list request.
+
+    ```bash
+    export FIRST_PROXY_IP="198.51.100.10"
+    export SECOND_PROXY_IP="203.0.113.20"
+
+    curl --request POST \
+      --url "https://app.proxy.doubledata.com/api/v1/isp/subscriptions/${SUBSCRIPTION_ID}/rotations" \
+      --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}" \
+      --header "Content-Type: application/json" \
+      --data "{\"ips\":[\"${FIRST_PROXY_IP}\",\"${SECOND_PROXY_IP}\"]}"
+    ```
+
+    The API validates the complete selection before accepting it. An invalid request does not consume rotation units.
+  </Step>
+
+  <Step title="Read the acceptance response">
+    A valid request returns `202 Accepted`, `Location`, and `Retry-After: 2`.
+
+    ```json
+    {
+      "rotation": {
+        "id": "4f114166-bbf7-41fa-82b8-c398f7a19914",
+        "status": "accepted",
+        "requested_count": 2,
+        "status_url": "/api/v1/isp/rotations/4f114166-bbf7-41fa-82b8-c398f7a19914"
+      }
+    }
+    ```
+
+    Wait at least the number of seconds in `Retry-After` before the first poll.
+  </Step>
+
+  <Step title="Poll the rotation">
+    Request `status_url` until the status is terminal.
+
+    ```bash
+    export ROTATION_ID="4f114166-bbf7-41fa-82b8-c398f7a19914"
+
+    curl --request GET \
+      --url "https://app.proxy.doubledata.com/api/v1/isp/rotations/${ROTATION_ID}" \
+      --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
+    ```
+
+    `accepted` and `processing` are nonterminal. `succeeded`, `partially_succeeded`, and `failed` are terminal. Use a modest backoff between polls.
+  </Step>
+
+  <Step title="Apply the ordered results">
+    Results preserve the submitted IP order. A successful item contains the full replacement connection record.
+
+    ```json
+    {
+      "rotation": {
+        "id": "4f114166-bbf7-41fa-82b8-c398f7a19914",
+        "subscription_id": "25974f58-6a7a-4b0d-8dd7-a89133f50762",
+        "status": "partially_succeeded",
+        "requested_count": 2,
+        "succeeded_count": 1,
+        "failed_count": 1,
+        "results": [
+          {
+            "old_ip": "198.51.100.10",
+            "new_ip": "198.51.100.80",
+            "new_port": 9200,
+            "protocols": ["http", "socks5"],
+            "username": "example-user",
+            "password": "example-password",
+            "country": "US",
+            "valid": true,
+            "assigned_at": "2026-08-31T12:05:00Z",
+            "status": "succeeded"
+          },
+          {
+            "old_ip": "203.0.113.20",
+            "status": "failed",
+            "error": {
+              "code": "rotation_temporarily_unavailable",
+              "message": "This proxy could not be rotated at this time. Please try again.",
+              "retryable": true
+            }
+          }
+        ],
+        "created_at": "2026-08-31T12:00:00Z",
+        "completed_at": "2026-08-31T12:05:00Z"
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Rotation units and failures
+
+Each confirmed replacement consumes one rotation unit. A partially successful batch consumes units only for successful replacements. Failed items remain in the ordered result with a safe error and a `retryable` flag.
+
+An existing rotation status request returns HTTP `200` even when its terminal status is `failed`. Use the rotation's `status`, counts, and per-IP results to decide what to deploy or retry.
