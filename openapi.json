@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "DoubleData Static ISP API",
-    "version": "1.0.0",
-    "description": "List active Static ISP subscriptions and proxies, rotate selected IPs asynchronously, and manage source-IP authorization.",
+    "version": "1.1.0",
+    "description": "Check organization balance, quote and order Static ISP packages, manage recurring subscriptions, list proxies, rotate selected IPs asynchronously, and manage source-IP authorization.",
     "license": {
       "name": "Proprietary",
       "identifier": "LicenseRef-Proprietary"
@@ -22,6 +22,18 @@
   ],
   "tags": [
     {
+      "name": "Balance",
+      "description": "The organization USD balance shared with the DoubleData website."
+    },
+    {
+      "name": "Catalog",
+      "description": "Static ISP tiers and cached country availability."
+    },
+    {
+      "name": "Orders",
+      "description": "Server-priced wallet orders and asynchronous provisioning."
+    },
+    {
       "name": "Subscriptions",
       "description": "Active Static ISP subscriptions and their connection records."
     },
@@ -35,6 +47,186 @@
     }
   ],
   "paths": {
+    "/balance": {
+      "get": {
+        "operationId": "getOrganizationBalance",
+        "summary": "Get organization balance",
+        "description": "Returns the USD balance shared with the DoubleData website. Add funds on the website; the API does not provide a funding endpoint.",
+        "tags": ["Balance"],
+        "responses": {
+          "200": {
+            "description": "Current organization balance",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BalanceResponse" },
+                "examples": {
+                  "funded": { "value": { "balance_cents": 12500, "currency": "usd" } }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/isp/catalog": {
+      "get": {
+        "operationId": "getISPCatalog",
+        "summary": "Get ISP catalog",
+        "description": "Returns shared, private, and dedicated tiers with cached country availability. A quote performs final live validation and authoritative pricing.",
+        "tags": ["Catalog"],
+        "responses": {
+          "200": {
+            "description": "Current ISP catalog",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/isp/quotes": {
+      "post": {
+        "operationId": "createISPQuote",
+        "summary": "Create an ISP quote",
+        "description": "Live-validates a package and returns a short-lived, server-priced quote. This operation does not debit the organization balance.",
+        "tags": ["Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateQuoteRequest" },
+              "examples": {
+                "privateUS": {
+                  "value": {
+                    "tier": "private",
+                    "countries": [{ "country": "US", "quantity": 5 }],
+                    "bandwidth_gb": 1000,
+                    "proxy_replacements": 20,
+                    "features": ["high_quality_ips"],
+                    "term": "monthly"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Server-priced quote",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/QuoteResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/isp/orders": {
+      "post": {
+        "operationId": "createISPOrder",
+        "summary": "Confirm an ISP order",
+        "description": "Atomically debits the organization balance for a current quote before asynchronous proxy provisioning starts. Repeating confirmation for the same quote does not debit twice.",
+        "tags": ["Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateOrderRequest" },
+              "examples": {
+                "confirm": {
+                  "value": { "quote_id": "23190741-420c-4f90-839a-33b894ab45a0" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Wallet debited and provisioning accepted",
+            "headers": {
+              "Location": { "$ref": "#/components/headers/Location" },
+              "Retry-After": { "$ref": "#/components/headers/PollAfter" },
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AcceptedOrderResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "402": { "$ref": "#/components/responses/PaymentRequired" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/isp/orders/{orderId}": {
+      "get": {
+        "operationId": "getISPOrder",
+        "summary": "Get ISP order status",
+        "description": "Returns the current provisioning state. Continue polling while status is `processing` or `outcome_unknown`.",
+        "tags": ["Orders"],
+        "parameters": [
+          { "$ref": "#/components/parameters/OrderID" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current order status",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OrderResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
     "/isp/subscriptions": {
       "get": {
         "operationId": "listISPSubscriptions",
@@ -78,6 +270,47 @@
             }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/isp/subscriptions/{subscriptionId}": {
+      "delete": {
+        "operationId": "cancelISPSubscription",
+        "summary": "Cancel subscription renewal",
+        "description": "Disables recurring renewal at the paid-period boundary. The subscription and proxies remain available strictly through `current_period_end`. Repeating the request is safe.",
+        "tags": ["Subscriptions"],
+        "parameters": [
+          { "$ref": "#/components/parameters/SubscriptionID" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancellation scheduled for period end",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CancellationResponse" },
+                "examples": {
+                  "scheduled": {
+                    "value": {
+                      "subscription_id": "25974f58-6a7a-4b0d-8dd7-a89133f50762",
+                      "status": "cancel_at_period_end",
+                      "current_period_end": "2026-09-01T00:00:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/TooManyRequests" },
           "500": { "$ref": "#/components/responses/InternalError" },
           "503": { "$ref": "#/components/responses/ServiceUnavailable" }
@@ -396,6 +629,16 @@
           "type": "string",
           "format": "uuid"
         }
+      },
+      "OrderID": {
+        "name": "orderId",
+        "in": "path",
+        "required": true,
+        "description": "The accepted order's UUID.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
       }
     },
     "headers": {
@@ -414,10 +657,10 @@
         }
       },
       "Location": {
-        "description": "The relative URL of the accepted rotation.",
+        "description": "The relative status URL of the accepted asynchronous operation.",
         "schema": {
           "type": "string",
-          "example": "/api/v1/isp/rotations/4f114166-bbf7-41fa-82b8-c398f7a19914"
+          "example": "/api/v1/isp/orders/88cc6b3c-a3f1-4265-866f-5eaa76fd2630"
         }
       },
       "PollAfter": {
@@ -437,6 +680,200 @@
       }
     },
     "schemas": {
+      "BalanceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["balance_cents", "currency"],
+        "properties": {
+          "balance_cents": {
+            "type": "integer",
+            "description": "Available organization balance in USD cents."
+          },
+          "currency": { "type": "string", "const": "usd" }
+        }
+      },
+      "CatalogCountry": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["country", "available", "display_available"],
+        "properties": {
+          "country": { "type": "string", "pattern": "^[A-Z]{2}$" },
+          "available": { "type": "integer", "minimum": 0 },
+          "display_available": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable cached availability."
+          }
+        }
+      },
+      "CatalogTier": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tier", "minimum_quantity", "self_service_limit", "countries", "fetched_at", "expires_at"],
+        "properties": {
+          "tier": { "type": "string", "enum": ["shared", "private", "dedicated"] },
+          "minimum_quantity": { "type": "integer", "minimum": 1 },
+          "self_service_limit": { "type": "integer", "minimum": 1 },
+          "countries": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CatalogCountry" }
+          },
+          "fetched_at": { "type": "string", "format": "date-time" },
+          "expires_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CatalogResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["currency", "default_bandwidth_gb", "terms", "tiers"],
+        "properties": {
+          "currency": { "type": "string", "const": "usd" },
+          "default_bandwidth_gb": { "type": "integer", "minimum": 0 },
+          "terms": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "enum": ["monthly", "yearly"] }
+          },
+          "tiers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CatalogTier" }
+          }
+        }
+      },
+      "RequestedCountryQuantity": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["country", "quantity"],
+        "properties": {
+          "country": { "type": "string", "pattern": "^[A-Z]{2}$", "example": "US" },
+          "quantity": { "type": "integer", "minimum": 1, "example": 5 }
+        }
+      },
+      "CreateQuoteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tier", "countries", "bandwidth_gb", "proxy_replacements", "features", "term"],
+        "properties": {
+          "tier": { "type": "string", "enum": ["shared", "private", "dedicated"] },
+          "countries": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/components/schemas/RequestedCountryQuantity" }
+          },
+          "bandwidth_gb": { "type": "integer", "minimum": 0 },
+          "proxy_replacements": { "type": "integer", "minimum": 0 },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["high_quality_ips", "unlimited_ip_authorizations", "high_concurrency", "double_concurrency", "high_priority_network"]
+            }
+          },
+          "term": { "type": "string", "enum": ["monthly", "yearly"] }
+        }
+      },
+      "Quote": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "product", "tier", "countries", "bandwidth_gb", "proxy_replacements", "features", "term", "currency", "base_cents", "country_premium_cents", "capability_premium_cents", "recurring_cents", "amount_due_cents", "self_service", "requires_kyc", "pricing_version_id", "expires_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "product": { "type": "string", "const": "isp" },
+          "tier": { "type": "string", "enum": ["shared", "private", "dedicated"] },
+          "countries": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/components/schemas/RequestedCountryQuantity" }
+          },
+          "bandwidth_gb": { "type": "integer", "minimum": 0 },
+          "proxy_replacements": { "type": "integer", "minimum": 0 },
+          "features": { "type": "array", "items": { "type": "string" } },
+          "term": { "type": "string", "enum": ["monthly", "yearly"] },
+          "currency": { "type": "string", "const": "usd" },
+          "base_cents": { "type": "integer", "minimum": 0 },
+          "country_premium_cents": { "type": "integer", "minimum": 0 },
+          "capability_premium_cents": { "type": "integer", "minimum": 0 },
+          "recurring_cents": { "type": "integer", "minimum": 1 },
+          "amount_due_cents": { "type": "integer", "minimum": 1 },
+          "self_service": { "type": "boolean" },
+          "requires_kyc": { "type": "boolean" },
+          "pricing_version_id": { "type": "string", "format": "uuid" },
+          "expires_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "QuoteResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["quote"],
+        "properties": {
+          "quote": { "$ref": "#/components/schemas/Quote" }
+        }
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["quote_id"],
+        "properties": {
+          "quote_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "quote_id", "subscription_id", "status", "amount_cents", "recurring_cents", "currency", "created_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "quote_id": { "type": "string", "format": "uuid" },
+          "subscription_id": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["processing", "active", "failed", "failed_refunded", "outcome_unknown", "cancelled"]
+          },
+          "amount_cents": { "type": "integer", "minimum": 1 },
+          "recurring_cents": { "type": "integer", "minimum": 1 },
+          "currency": { "type": "string", "const": "usd" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "status_url": {
+            "type": "string",
+            "description": "Relative URL to poll for status. Present in the order-acceptance response."
+          }
+        }
+      },
+      "AcceptedOrder": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Order" },
+          {
+            "type": "object",
+            "required": ["status_url"]
+          }
+        ]
+      },
+      "OrderResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["order"],
+        "properties": {
+          "order": { "$ref": "#/components/schemas/Order" }
+        }
+      },
+      "AcceptedOrderResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["order"],
+        "properties": {
+          "order": { "$ref": "#/components/schemas/AcceptedOrder" }
+        }
+      },
+      "CancellationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["subscription_id", "status", "current_period_end"],
+        "properties": {
+          "subscription_id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "const": "cancel_at_period_end" },
+          "current_period_end": { "type": "string", "format": "date-time" }
+        }
+      },
       "CountryQuantity": {
         "type": "object",
         "additionalProperties": false,
@@ -746,6 +1183,11 @@
               "invalid_proxy_ip",
               "duplicate_proxy_ip",
               "unknown_proxy_ip",
+              "invalid_package",
+              "insufficient_balance",
+              "quote_expired",
+              "request_conflict",
+              "kyc_required",
               "rotation_allowance_exhausted",
               "rotation_in_progress",
               "unauthorized",
@@ -833,6 +1275,41 @@
           }
         }
       },
+      "PaymentRequired": {
+        "description": "The organization balance cannot cover the order.",
+        "headers": {
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "insufficientBalance": {
+                "value": {
+                  "error": {
+                    "code": "insufficient_balance",
+                    "message": "The organization balance cannot cover this order. Add funds on the website and try again.",
+                    "request_id": "ad2f824c-46bc-47c6-b276-2bb51a3083b1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Organization verification is required for the order.",
+        "headers": {
+          "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+          "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
       "NotFound": {
         "description": "The requested resource was not found.",
         "headers": {
@@ -846,7 +1323,7 @@
         }
       },
       "Conflict": {
-        "description": "Another rotation is already in progress for the subscription.",
+        "description": "The quote expired, the request conflicts with existing state, or another subscription mutation is in progress.",
         "headers": {
           "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
           "Cache-Control": { "$ref": "#/components/headers/CacheControl" }

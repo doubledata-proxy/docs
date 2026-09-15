@@ -1,0 +1,94 @@
+---
+title: "Order Static ISP proxies"
+description: "Quote and order a recurring ISP package from your organization balance."
+---
+
+Ordering uses your organization's USD balance. Add funds on the DoubleData website; the API does not provide a funding endpoint.
+
+The flow has two steps: create a short-lived server-priced quote, then confirm that quote. Confirmation debits the full amount before proxy provisioning starts.
+
+## Check balance and availability
+
+```bash
+curl --request GET \
+  --url https://app.proxy.doubledata.com/api/v1/balance \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
+
+curl --request GET \
+  --url https://app.proxy.doubledata.com/api/v1/isp/catalog \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
+```
+
+The catalog returns shared, private, and dedicated tiers, their minimum quantities, and cached country availability. A quote performs final live validation, so catalog availability is not a reservation.
+
+## Create a quote
+
+<Warning>
+  `POST /isp/quotes` validates a live production package. The response expires; do not cache or reuse an expired quote.
+</Warning>
+
+```bash
+curl --request POST \
+  --url https://app.proxy.doubledata.com/api/v1/isp/quotes \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "tier": "private",
+    "countries": [{ "country": "US", "quantity": 5 }],
+    "bandwidth_gb": 1000,
+    "proxy_replacements": 20,
+    "features": ["high_quality_ips"],
+    "term": "monthly"
+  }'
+```
+
+The server determines `amount_due_cents` and `recurring_cents`. Never send a price, organization ID, or idempotency key.
+
+## Confirm and poll the order
+
+<Warning>
+  `POST /isp/orders` immediately debits your live organization balance. Confirm the quote details and amount before sending it.
+</Warning>
+
+```bash
+export QUOTE_ID="23190741-420c-4f90-839a-33b894ab45a0"
+
+curl --request POST \
+  --url https://app.proxy.doubledata.com/api/v1/isp/orders \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}" \
+  --header "Content-Type: application/json" \
+  --data "{\"quote_id\":\"${QUOTE_ID}\"}"
+```
+
+A successful debit returns `202 Accepted`, a `Location` status path, and `Retry-After: 2`. Poll that path until the order reaches a terminal state.
+
+| Status | Meaning |
+| --- | --- |
+| `processing` | Provisioning is still running. |
+| `active` | The subscription and proxies are ready. |
+| `failed_refunded` | Provisioning failed and the wallet debit was refunded. |
+| `failed` | Provisioning failed. Contact support with the request ID if no refund is visible. |
+| `outcome_unknown` | Reconciliation is still running. Do not submit a replacement order. |
+| `cancelled` | The order was canceled before activation. |
+
+When the order is `active`, use `subscription_id` to list proxies.
+
+## Cancel renewal
+
+<Warning>
+  `DELETE /isp/subscriptions/{subscriptionId}` disables recurring renewal for a live subscription.
+</Warning>
+
+```bash
+curl --request DELETE \
+  --url "https://app.proxy.doubledata.com/api/v1/isp/subscriptions/${SUBSCRIPTION_ID}" \
+  --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
+```
+
+Cancellation takes effect at `current_period_end`. The subscription and its proxies remain available through the paid period. Repeating the request is safe.
+
+## Recurring balance charges
+
+Wallet-funded subscriptions renew from the same organization balance. Keep enough balance available before the next period. If renewal cannot be paid by the cutoff, renewal is disabled and access ends at the current paid-period boundary.
+
+For organizations with active API-funded ISP subscriptions, current enabled organization admins receive the low-balance and renewal-status emails. A balance below `$5.00` triggers no more than one low-balance email per organization every 72 hours.

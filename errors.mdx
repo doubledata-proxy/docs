@@ -27,8 +27,13 @@ The API returns errors in one stable envelope:
 | `400` | `invalid_proxy_ip` | Replace the IPs listed in `error.details.ips` with valid public IPv4 addresses. |
 | `400` | `duplicate_proxy_ip` | Remove duplicate IPs from the rotation request. |
 | `400` | `unknown_proxy_ip` | Refresh the subscription's proxy list and submit active IPs from that response. |
+| `400` | `invalid_package` | Refresh the ISP catalog and correct the requested tier, country, quantity, or capabilities. |
 | `401` | `unauthorized` | Supply the current organization API key as a bearer token. |
+| `402` | `insufficient_balance` | Add funds on the DoubleData website, then confirm a current quote. |
+| `403` | `kyc_required` | Complete organization verification before confirming the order. |
 | `404` | `not_found` | Check the resource ID and confirm it belongs to the current organization. |
+| `409` | `quote_expired` | Create a new quote before placing the order. |
+| `409` | `request_conflict` | Refresh the quote or order instead of changing an existing request. |
 | `409` | `rotation_in_progress` | Poll the active rotation before submitting another subscription mutation. |
 | `429` | `rotation_allowance_exhausted` | Reduce the selection or wait until `rotations_reset_at`. |
 | `429` | `rate_limit_exceeded` | Wait for the `Retry-After` duration before retrying. |
@@ -46,6 +51,7 @@ Limits apply per API key in 60-second windows:
 | Read | 120 per minute | All `GET` requests |
 | Rotation | 10 per minute | Rotation `POST` |
 | Authorization | 20 per minute | Authorization `PUT` and `DELETE` |
+| Purchase | 10 per minute | Quote and order `POST`, and subscription `DELETE` |
 
 A rate-limit response includes `Retry-After` in seconds. Wait at least that long before retrying. Rotation acceptance also returns `Retry-After: 2` as the earliest recommended first poll.
 

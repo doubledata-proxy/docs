@@ -1,17 +1,20 @@
 ---
 title: "DoubleData Static ISP API"
-description: "Automate Static ISP subscriptions, proxies, rotations, and IP authorization."
+description: "Check balance, order, and manage Static ISP subscriptions through one API."
 ---
 
-Use the DoubleData API to list your active Static ISP subscriptions and complete proxy connection records, rotate the exact IPs you select, track each rotation to completion, and manage source-IP authorization.
+Use the DoubleData API to check your organization balance, browse ISP availability, create server-priced orders, and manage subscriptions, proxies, rotations, and source-IP authorization.
 
 <Info>
   The API base URL is `https://app.proxy.doubledata.com/api/v1`. Every request uses your organization's API key as a bearer token.
 </Info>
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
   <Card title="Make your first request" icon="rocket" href="/quickstart">
     List your active subscriptions with a read-only request.
+  </Card>
+  <Card title="Order ISP proxies" icon="cart-shopping" href="/guides/ordering">
+    Quote a package, debit your balance, and poll provisioning.
   </Card>
   <Card title="Rotate selected IPs" icon="rotate" href="/guides/rotations">
     Submit up to 100 IPs and poll for ordered results.
@@ -24,6 +27,10 @@ Use the DoubleData API to list your active Static ISP subscriptions and complete
 ## What you can automate
 
 - List active subscriptions with remaining rotation units and reset times.
+- Read the USD balance funded through the DoubleData website.
+- Browse shared, private, and dedicated availability by country.
+- Quote and order recurring Static ISP packages with server-authoritative pricing.
+- Cancel renewal while retaining access through the paid period.
 - Retrieve complete connection details for each assigned proxy.
 - Replace 1–100 selected IPs while preserving each proxy's country.
 - Follow asynchronous rotations through terminal results.

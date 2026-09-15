@@ -33,14 +33,20 @@
       },
       {
         "group": "Workflows",
-        "pages": ["guides/rotations", "guides/ip-authorization", "errors"]
+        "pages": ["guides/ordering", "guides/rotations", "guides/ip-authorization", "errors"]
       },
       {
         "group": "API reference",
         "openapi": "openapi.json",
         "pages": [
           "api-reference/introduction",
+          "GET /balance",
+          "GET /isp/catalog",
+          "POST /isp/quotes",
+          "POST /isp/orders",
+          "GET /isp/orders/{orderId}",
           "GET /isp/subscriptions",
+          "DELETE /isp/subscriptions/{subscriptionId}",
           "GET /isp/subscriptions/{subscriptionId}/proxies",
           "POST /isp/subscriptions/{subscriptionId}/rotations",
           "GET /isp/rotations/{rotationId}",
