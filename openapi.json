@@ -120,7 +120,7 @@
                     "countries": [{ "country": "US", "quantity": 5 }],
                     "bandwidth_gb": 1000,
                     "proxy_replacements": 20,
-                    "features": ["high_quality_ips"],
+                    "features": [],
                     "term": "monthly"
                   }
                 }
@@ -752,7 +752,7 @@
       "CreateQuoteRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["tier", "countries", "bandwidth_gb", "proxy_replacements", "features", "term"],
+        "required": ["tier", "countries", "bandwidth_gb", "proxy_replacements", "term"],
         "properties": {
           "tier": { "type": "string", "enum": ["shared", "private", "dedicated"] },
           "countries": {
@@ -764,6 +764,10 @@
           "proxy_replacements": { "type": "integer", "minimum": 0 },
           "features": {
             "type": "array",
+            "description": "Optional package features. Omit this field or send [] for no additional features. Every supplied item must be a listed enum value; empty strings are invalid. Feature availability and combinations are validated when you create the quote.",
+            "minItems": 0,
+            "default": [],
+            "example": [],
             "items": {
               "type": "string",
               "enum": ["high_quality_ips", "unlimited_ip_authorizations", "high_concurrency", "double_concurrency", "high_priority_network"]

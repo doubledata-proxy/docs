@@ -37,10 +37,12 @@ curl --request POST \
     "countries": [{ "country": "US", "quantity": 5 }],
     "bandwidth_gb": 1000,
     "proxy_replacements": 20,
-    "features": ["high_quality_ips"],
+    "features": [],
     "term": "monthly"
   }'
 ```
+
+Omit `features` or send `"features": []` for no additional features. To request features, send one or more enum values, such as `"features": ["high_quality_ips", "high_concurrency"]`. Do not send an empty string. The quote validates feature availability and combinations for your package.
 
 The server determines `amount_due_cents` and `recurring_cents`. Never send a price, organization ID, or idempotency key.
 
