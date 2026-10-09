@@ -1,0 +1,184 @@
+---
+title: "Proxy formats and sessions"
+description: "Connect to residential, datacenter, and mobile proxies with the right gateway, username parameters, and session settings."
+---
+
+Use your proxy username and password from the [dashboard](https://app.proxy.doubledata.com/dashboard/proxies) to connect through DoubleData. The same connection formats work for residential, datacenter, and mobile proxies. Your credential's product determines which IP pool you use.
+
+<Info>
+  Proxy credentials are different from your organization's API key. Use your proxy username and password for proxy connections, and your API key for the [management API](/authentication).
+</Info>
+
+## Choose a gateway
+
+Choose the gateway closest to the application that sends your requests.
+
+| Gateway | Host | HTTP port | SOCKS5 port |
+| --- | --- | --- | --- |
+| Europe (default) | `proxy.doubledata.com` | `7777` | `8888` |
+| United States | `us.proxy.doubledata.com` | `7777` | `8888` |
+
+Both gateways accept the same proxy credentials. Choosing the US gateway does not select a US exit IP. Add `-country-us` to your username when you need a US exit IP.
+
+Keep the same gateway while you use a sticky session. Switching gateways does not guarantee that you keep the same exit IP.
+
+## Connection formats
+
+Replace `USERNAME` and `PASSWORD` with your proxy credentials. Replace the host with `us.proxy.doubledata.com` to use the US gateway.
+
+<CodeGroup>
+```text HTTP proxy URL
+http://USERNAME:PASSWORD@proxy.doubledata.com:7777
+```
+
+```text SOCKS5 proxy URL
+socks5://USERNAME:PASSWORD@proxy.doubledata.com:8888
+```
+
+```text Host, port, username, password
+proxy.doubledata.com:7777:USERNAME:PASSWORD
+```
+
+```text Username, password, host, port
+USERNAME:PASSWORD:proxy.doubledata.com:7777
+```
+
+```text Username and password before host
+USERNAME:PASSWORD@proxy.doubledata.com:7777
+```
+
+```text Host before username and password
+proxy.doubledata.com:7777@USERNAME:PASSWORD
+```
+</CodeGroup>
+
+Use the format your application expects. The colon-separated formats are import formats for tools that support them; they are not URLs. If your tool has separate fields, enter the host, port, username, and password separately.
+
+When you embed credentials in a URL, percent-encode reserved characters in the username and password. For example, encode `@` as `%40`. With curl, use `--proxy-user` to pass credentials separately.
+
+<Warning>
+  Keep proxy credentials private. Do not commit them to source control or share generated proxy lists. Requests through your proxy consume traffic from your account.
+</Warning>
+
+## Username parameters
+
+Append targeting parameters to your existing username. Keep your password unchanged.
+
+```text
+USERNAME-country-us-city-newyork-session-a1b2c3d4
+```
+
+| Parameter | Example | Purpose |
+| --- | --- | --- |
+| `-country-<code>` | `-country-us` | Request an exit IP in a country using its two-letter country code. |
+| `-city-<city>` | `-city-newyork` | Request a supported city within your selected country. Available for residential and datacenter proxies. |
+| `-session-<id>` | `-session-a1b2c3d4` | Reuse a session for related connections. |
+
+Use lowercase country codes and copy supported city values from the dashboard's proxy generator. For example, the generator formats `New York` as `newyork`. Leave country and city parameters out when you do not need location targeting.
+
+<Note>
+  Location availability depends on your product and the current pool. Mobile proxies support country targeting only; do not add a city parameter.
+</Note>
+
+## Product examples
+
+Use credentials created for the product you want. Adding a country or session parameter does not change a residential credential into a datacenter or mobile credential.
+
+<Tabs>
+  <Tab title="Residential">
+    Select a country, optionally select a supported city, and add a session ID when you want related connections to reuse a session.
+
+    ```text Rotating, US
+    http://USERNAME-country-us:PASSWORD@proxy.doubledata.com:7777
+    ```
+
+    ```text Sticky, US with city targeting
+    http://USERNAME-country-us-city-newyork-session-a1b2c3d4:PASSWORD@proxy.doubledata.com:7777
+    ```
+  </Tab>
+
+  <Tab title="Datacenter">
+    Use your datacenter proxy credential with the same country, supported city, and session parameters.
+
+    ```text Rotating, Germany
+    http://USERNAME-country-de:PASSWORD@proxy.doubledata.com:7777
+    ```
+
+    ```text Sticky, Germany
+    http://USERNAME-country-de-session-b2c3d4e5:PASSWORD@proxy.doubledata.com:7777
+    ```
+
+    Datacenter proxies are separate from Static ISP proxies. For a Static ISP subscription, use the connection details returned by the [proxies API](/api-reference/introduction); do not replace its host or append these username parameters.
+  </Tab>
+
+  <Tab title="Mobile">
+    Select a country and optionally add a session ID. Mobile proxies do not support city targeting.
+
+    ```text Rotating, US through the US gateway
+    http://USERNAME-country-us:PASSWORD@us.proxy.doubledata.com:7777
+    ```
+
+    ```text Sticky, US through the US gateway
+    http://USERNAME-country-us-session-c3d4e5f6:PASSWORD@us.proxy.doubledata.com:7777
+    ```
+  </Tab>
+</Tabs>
+
+## Rotating and sticky sessions
+
+### Rotating connections
+
+Leave out `-session-<id>` to allow rotation when you open a new proxy connection. A reused HTTP connection or an existing tunnel can keep its current exit IP. Rotation does not guarantee a different IP on every request, and a previously used IP can appear again.
+
+### Sticky sessions
+
+Add a nonempty session ID, such as `-session-a1b2c3d4`, and reuse the same full username and gateway for related connections. Use a different ID for a separate session.
+
+- Use a random alphanumeric ID. Eight characters, such as `a1b2c3d4`, are a practical choice and match the dashboard generator. Eight characters are a recommendation, not an enforced minimum.
+- Keep the country and city parameters unchanged during a session.
+- The default session lifetime is 120 minutes. You do not set a custom lifetime in the username.
+- IP persistence is best effort. An exit IP can change before the session expires if it becomes unavailable or the connection recovers through another route.
+- A session ID identifies a proxy session; it does not preserve website cookies or logins. Your application must manage those separately.
+
+<Note>
+  In the dashboard generator, **Rotating** produces lines without a session ID. **Sticky** gives each generated line its own session ID. Reuse one line for related connections; different generated lines represent separate sessions and can still return the same IP.
+</Note>
+
+## Try a connection
+
+Store your proxy credentials in environment variables before running these examples.
+
+```bash
+export DOUBLEDATA_PROXY_USERNAME="your_proxy_username"
+export DOUBLEDATA_PROXY_PASSWORD="your_proxy_password"
+```
+
+<Warning>
+  These requests use your live proxy credentials and consume traffic.
+</Warning>
+
+<CodeGroup>
+```bash HTTP with a sticky US session
+curl --proxy http://proxy.doubledata.com:7777 \
+  --proxy-user "${DOUBLEDATA_PROXY_USERNAME}-country-us-session-a1b2c3d4:${DOUBLEDATA_PROXY_PASSWORD}" \
+  https://ipinfo.io/ip
+```
+
+```bash SOCKS5 through the US gateway
+curl --proxy socks5h://us.proxy.doubledata.com:8888 \
+  --proxy-user "${DOUBLEDATA_PROXY_USERNAME}-country-us:${DOUBLEDATA_PROXY_PASSWORD}" \
+  https://ipinfo.io/ip
+```
+</CodeGroup>
+
+The HTTP proxy also supports HTTPS destinations, as shown above. With curl, `socks5h://` asks the proxy to resolve the destination hostname.
+
+## Troubleshooting
+
+| Problem | What to check |
+| --- | --- |
+| Authentication fails | Use the proxy username and password from the dashboard. Keep the base username and password unchanged when adding targeting parameters. |
+| A location request fails | Choose a country and city listed for your product. Remove city targeting for mobile proxies. |
+| A sticky IP changes | Keep the full username and gateway unchanged. Session expiry or exit availability can change the IP. |
+| The US gateway returns a non-US IP | Add `-country-us`; the gateway location and exit IP country are independent. |
+| An imported proxy does not connect | Check your tool's expected field order and use port `7777` for HTTP or `8888` for SOCKS5. |

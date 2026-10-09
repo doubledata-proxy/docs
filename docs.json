@@ -32,6 +32,10 @@
         "pages": ["index", "quickstart", "authentication"]
       },
       {
+        "group": "Proxy connections",
+        "pages": ["guides/proxy-formats"]
+      },
+      {
         "group": "Workflows",
         "pages": ["guides/ordering", "guides/rotations", "guides/ip-authorization", "errors"]
       },
