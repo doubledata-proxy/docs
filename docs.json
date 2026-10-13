@@ -33,7 +33,7 @@
       },
       {
         "group": "Proxy connections",
-        "pages": ["guides/proxy-formats"]
+        "pages": ["guides/proxy-formats", "guides/sticky-sessions"]
       },
       {
         "group": "Workflows",

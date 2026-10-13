@@ -1,0 +1,91 @@
+---
+title: "Sticky sessions and TTL"
+description: "Choose a sticky-session lifetime from 1 to 120 minutes with the optional TTL username parameter."
+---
+
+Add `-session-<id>` to your proxy username when related connections should reuse a session. Add the optional `-ttl-<minutes>` parameter to request its lifetime in minutes. Keep your proxy password unchanged.
+
+```text 30-minute sticky session
+USERNAME-country-us-session-a1b2c3d4-ttl-30
+```
+
+Use the same full username and gateway for related connections. Use a different session ID for a separate session.
+
+## Set the lifetime
+
+| Setting | Username suffix | Lifetime |
+| --- | --- | --- |
+| Default | `-session-a1b2c3d4` | Keep the existing default of 120 minutes. |
+| Minimum | `-session-a1b2c3d4-ttl-1` | Request 1 minute. |
+| Custom | `-session-a1b2c3d4-ttl-30` | Request 30 minutes. |
+| Maximum | `-session-a1b2c3d4-ttl-120` | Request 120 minutes. |
+
+- TTL is optional. Leaving it out preserves the existing session behavior.
+- Supply one integer from `1` through `120`, inclusive. The unit is minutes.
+- Include a nonempty `-session-<id>` whenever you supply TTL.
+- Keep the session ID, TTL, country, city, and gateway unchanged while reusing a session.
+- Adding, removing, or changing TTL creates a separate session, even when you reuse the same session ID. An explicit `-ttl-120` is separate from omitting TTL.
+
+Custom lifetimes require support for your requested product and location. If a supported connection is unavailable, the request is rejected.
+
+<Info>
+  Your requested lifetime also applies when the connection uses a shared residential pool. You can request a one-minute or 30-minute session there. Other sessions retain their own lifetimes.
+</Info>
+
+## What expiry means
+
+TTL controls the sticky-session lifetime. It does not set an HTTP request timeout or disconnect an existing proxy tunnel when the lifetime ends. New connections after expiry can use another exit IP; a previously used IP can appear again.
+
+IP persistence is best effort. An exit IP can change before TTL expires if it becomes unavailable or the connection recovers through another route. Your application must manage website cookies and logins separately.
+
+To allow rotation when you open new proxy connections, omit both `-session-<id>` and `-ttl-<minutes>`. See [Proxy formats and sessions](/guides/proxy-formats) for gateway and connection options.
+
+## Connect with curl
+
+Store your proxy username and password in environment variables:
+
+```bash
+export DOUBLEDATA_PROXY_USERNAME="your_proxy_username"
+export DOUBLEDATA_PROXY_PASSWORD="your_proxy_password"
+```
+
+<Warning>
+  These requests use your live proxy credentials and consume traffic. Keep the credentials private.
+</Warning>
+
+<CodeGroup>
+```bash HTTPS, 30-minute US session
+curl --proxy https://proxy.doubledata.com:9999 \
+  --proxy-user "${DOUBLEDATA_PROXY_USERNAME}-country-us-session-a1b2c3d4-ttl-30:${DOUBLEDATA_PROXY_PASSWORD}" \
+  https://ipinfo.io/ip
+```
+
+```bash HTTP, one-minute US session
+curl --proxy http://proxy.doubledata.com:7777 \
+  --proxy-user "${DOUBLEDATA_PROXY_USERNAME}-country-us-session-b2c3d4e5-ttl-1:${DOUBLEDATA_PROXY_PASSWORD}" \
+  https://ipinfo.io/ip
+```
+
+```bash SOCKS5, 120-minute US session
+curl --proxy socks5h://us.proxy.doubledata.com:8888 \
+  --proxy-user "${DOUBLEDATA_PROXY_USERNAME}-country-us-session-c3d4e5f6-ttl-120:${DOUBLEDATA_PROXY_PASSWORD}" \
+  https://ipinfo.io/ip
+```
+</CodeGroup>
+
+The same TTL parameter works with HTTP, HTTPS, and SOCKS5 connections. The HTTPS example uses port `9999` and keeps certificate verification enabled.
+
+In the dashboard's **Proxy Generator**, choose **Sticky** to generate session IDs. To set a custom lifetime, append `-ttl-<minutes>` to the generated username before using it. Reuse that complete username for related connections.
+
+## Invalid values
+
+| Username suffix | Why it is rejected |
+| --- | --- |
+| `-ttl-30` | A session ID is required. |
+| `-session-a1b2c3d4-ttl-0` | The minimum is `1`. |
+| `-session-a1b2c3d4-ttl-121` | The maximum is `120`. |
+| `-session-a1b2c3d4-ttl-1.5` | TTL must be an integer. |
+| `-session-a1b2c3d4-ttl-` | A value is required. |
+| `-session-a1b2c3d4-ttl-1-ttl-30` | Supply TTL only once. |
+
+Fix the username before retrying. Rejected TTL values are not applied to your session.
