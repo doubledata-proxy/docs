@@ -40,6 +40,11 @@
         "pages": ["guides/ordering", "guides/rotations", "guides/ip-authorization", "errors"]
       },
       {
+        "group": "Stats & usage",
+        "openapi": "openapi.json",
+        "pages": ["guides/usage", "api-reference/usage"]
+      },
+      {
         "group": "API reference",
         "openapi": "openapi.json",
         "pages": [

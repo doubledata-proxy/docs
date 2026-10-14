@@ -1,15 +1,18 @@
 ---
-title: "DoubleData Static ISP API"
-description: "Check balance, order, and manage Static ISP subscriptions through one API."
+title: "DoubleData API"
+description: "Check proxy usage and balance, and manage Static ISP subscriptions through one API."
 ---
 
-Use the DoubleData API to check your organization balance, browse ISP availability, create server-priced orders, and manage subscriptions, proxies, rotations, and source-IP authorization.
+Use the DoubleData API to monitor Residential, Datacenter, and Mobile credential usage, check your organization balance, and manage Static ISP subscriptions, proxies, rotations, and source-IP authorization.
 
 <Info>
   The API base URL is `https://app.proxy.doubledata.com/api/v1`. Every request uses your organization's API key as a bearer token.
 </Info>
 
 <CardGroup cols={2}>
+  <Card title="Check proxy usage" icon="chart-line" href="/guides/usage">
+    Read bandwidth, request counts, and wallet charges for all your proxy credentials.
+  </Card>
   <Card title="Make your first request" icon="rocket" href="/quickstart">
     List your active subscriptions with a read-only request.
   </Card>
@@ -26,6 +29,7 @@ Use the DoubleData API to check your organization balance, browse ISP availabili
 
 ## What you can automate
 
+- Check workspace-wide or per-credential usage over a UTC date range.
 - List active subscriptions with remaining rotation units and reset times.
 - Read the USD balance funded through the DoubleData website.
 - Browse shared, private, and dedicated availability by country.

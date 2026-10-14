@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "DoubleData Static ISP API",
-    "version": "1.1.0",
-    "description": "Check organization balance, quote and order Static ISP packages, manage recurring subscriptions, list proxies, rotate selected IPs asynchronously, and manage source-IP authorization.",
+    "title": "DoubleData API",
+    "version": "1.2.0",
+    "description": "Check bandwidth, request counts, and wallet usage charges for Residential, Datacenter, and Mobile credentials. Check organization balance, order Static ISP packages, and manage subscriptions, proxies, rotations, and source-IP authorization.",
     "license": {
       "name": "Proprietary",
       "identifier": "LicenseRef-Proprietary"
@@ -21,6 +21,10 @@
     }
   ],
   "tags": [
+    {
+      "name": "Stats & usage",
+      "description": "Date-range bandwidth, request counts, and actual wallet usage charges for your proxy credentials."
+    },
     {
       "name": "Balance",
       "description": "The organization USD balance shared with the DoubleData website."
@@ -47,6 +51,65 @@
     }
   ],
   "paths": {
+    "/usage": {
+      "get": {
+        "operationId": "getProxyUsage",
+        "summary": "Get bandwidth and usage charges",
+        "description": "Returns totals and per-credential usage for Residential, Datacenter, Mobile, and any legacy ISP credentials in your workspace. Omit the credential selector for all credentials, including disabled credentials and those with zero usage. Static ISP and Static Datacenter subscriptions use separate subscription IDs and are not included. Dates are UTC: from is inclusive, to is exclusive. Provide both dates or omit both for the current UTC calendar month. Maximum range: 366 days. wallet_spent_cents counts only actual wallet usage debits, attributed to the start of the usage window. Older debits without a usage window use their posting date. Package-funded traffic does not create a wallet usage charge; package purchases and static subscription fees are excluded. Recent usage and charges may take a short time to appear. The API key determines the workspace; do not send an organization ID.",
+        "tags": ["Stats & usage"],
+        "parameters": [
+          {
+            "name": "from", "in": "query", "required": false,
+            "description": "Inclusive UTC start date. Supply to as well. Omit both dates for the current UTC calendar month.",
+            "schema": { "type": "string", "format": "date" }, "example": "2026-04-01"
+          },
+          {
+            "name": "to", "in": "query", "required": false,
+            "description": "Exclusive UTC end date, after from and at most 366 days later. Use the first day of the following month to include a complete calendar month.",
+            "schema": { "type": "string", "format": "date" }, "example": "2026-05-01"
+          },
+          {
+            "name": "credential_id", "in": "query", "required": false,
+            "description": "Select a single credential ID returned by this endpoint. Do not combine with username. A missing credential or one outside your workspace returns 404.",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "username", "in": "query", "required": false,
+            "description": "Select a single base proxy username, without targeting or session suffixes. Do not combine with credential_id.",
+            "schema": { "type": "string", "pattern": "^[a-zA-Z0-9_]{1,32}$" }, "example": "resi_jobs"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded bandwidth, request counts, and wallet usage charges for the selected credentials",
+            "headers": {
+              "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
+              "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UsageResponse" },
+                "example": {
+                  "from": "2026-04-01", "to": "2026-05-01", "currency": "usd",
+                  "totals": { "bandwidth_bytes": 4000000000, "requests": 120, "wallet_spent_cents": 400 },
+                  "credentials": [{
+                    "id": "25974f58-6a7a-4b0d-8dd7-a89133f50762",
+                    "username": "resi_jobs", "display_name": "Jobs", "proxy_type": "residential", "enabled": true,
+                    "bandwidth_bytes": 4000000000, "requests": 120, "wallet_spent_cents": 400
+                  }]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
     "/balance": {
       "get": {
         "operationId": "getOrganizationBalance",
@@ -680,6 +743,42 @@
       }
     },
     "schemas": {
+      "UsageTotals": {
+        "type": "object",
+        "required": ["bandwidth_bytes", "requests", "wallet_spent_cents"],
+        "properties": {
+          "bandwidth_bytes": { "type": "integer", "format": "int64", "minimum": 0, "maximum": 9007199254740991, "description": "Durably recorded traffic in bytes. Divide by 1,000,000,000 for decimal GB." },
+          "requests": { "type": "integer", "format": "int64", "minimum": 0, "maximum": 9007199254740991, "description": "Recorded proxy request count." },
+          "wallet_spent_cents": { "type": "integer", "format": "int64", "minimum": 0, "maximum": 9007199254740991, "description": "Actual wallet usage debits in USD cents. Excludes package purchases, package-funded consumption, subscription fees, top-ups, manual adjustments, and positive ledger entries." }
+        }
+      },
+      "CredentialUsage": {
+        "allOf": [
+          { "$ref": "#/components/schemas/UsageTotals" },
+          {
+            "type": "object",
+            "required": ["id", "username", "display_name", "proxy_type", "enabled"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid", "description": "Stable proxy credential ID, distinct from a Static ISP subscription ID." },
+              "username": { "type": "string", "description": "Base proxy username. No connection password is returned." },
+              "display_name": { "type": "string", "description": "Your custom credential name, or an empty string if none is set." },
+              "proxy_type": { "type": "string", "enum": ["residential", "datacenter", "mobile", "isp"] },
+              "enabled": { "type": "boolean", "description": "Current credential state; disabled credentials retain their usage history." }
+            }
+          }
+        ]
+      },
+      "UsageResponse": {
+        "type": "object",
+        "required": ["from", "to", "currency", "totals", "credentials"],
+        "properties": {
+          "from": { "type": "string", "format": "date", "description": "Inclusive UTC date." },
+          "to": { "type": "string", "format": "date", "description": "Exclusive UTC date." },
+          "currency": { "type": "string", "const": "usd" },
+          "totals": { "$ref": "#/components/schemas/UsageTotals" },
+          "credentials": { "type": "array", "items": { "$ref": "#/components/schemas/CredentialUsage" }, "description": "Selected current credentials ordered by username and ID. Deleted credentials are excluded. An empty workspace returns an empty array and zero totals." }
+        }
+      },
       "BalanceResponse": {
         "type": "object",
         "additionalProperties": false,
