@@ -12,7 +12,7 @@ curl 'https://app.proxy.doubledata.com/api/v1/usage?from=2026-04-01&to=2026-05-0
   -H "Authorization: Bearer $DOUBLEDATA_API_KEY"
 ```
 
-The response includes workspace totals and one record per credential, including disabled credentials and credentials with no usage. The key selects your workspace; do not send an organization ID.
+The response includes totals for your current credentials and one record per credential, including disabled credentials and credentials with no usage. Deleted credentials are not included. The key selects your workspace; do not send an organization ID.
 
 ```json
 {

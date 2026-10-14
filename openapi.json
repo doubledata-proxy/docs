@@ -776,7 +776,7 @@
           "to": { "type": "string", "format": "date", "description": "Exclusive UTC date." },
           "currency": { "type": "string", "const": "usd" },
           "totals": { "$ref": "#/components/schemas/UsageTotals" },
-          "credentials": { "type": "array", "items": { "$ref": "#/components/schemas/CredentialUsage" }, "description": "Selected credentials ordered by username and ID. An empty workspace returns an empty array and zero totals." }
+          "credentials": { "type": "array", "items": { "$ref": "#/components/schemas/CredentialUsage" }, "description": "Selected current credentials ordered by username and ID. Deleted credentials are excluded. An empty workspace returns an empty array and zero totals." }
         }
       },
       "BalanceResponse": {
