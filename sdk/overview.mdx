@@ -1,0 +1,23 @@
+---
+title: "Proxy SDK"
+sidebarTitle: "Overview"
+description: "Add consent-based bandwidth sharing to your mobile or desktop application."
+---
+
+Embed Double Data's proxy network in your application with a lightweight SDK for Android and desktop. Users choose whether to share their connection, and your app stays in control of the session.
+
+## Integrate in four steps
+
+1. [Download](/sdk/downloads) the package for your platform.
+2. Create a client with your application configuration and privacy notice.
+3. Show the built-in consent screen when the user chooses to enable sharing.
+4. Display sharing status and provide a withdrawal control.
+
+After acceptance, proxy requests run automatically. Declining keeps sharing off. Withdrawal stops active connections and prevents reconnection.
+
+<CardGroup cols={2}>
+  <Card title="Android" icon="mobile" href="/sdk/mobile">Add the AAR and show the ready-made consent dialog.</Card>
+  <Card title="Desktop" icon="desktop" href="/sdk/desktop">Embed the native library in your application.</Card>
+</CardGroup>
+
+The SDK provides TLS/TCP and QUIC transport, status callbacks, configurable transfer limits, and explicit start, stop, and withdrawal controls. [Consent and lifecycle](/sdk/consent).

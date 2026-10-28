@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "DoubleData API",
+    "title": "Double Data Proxy API",
     "version": "1.2.0",
-    "description": "Check bandwidth, request counts, and wallet usage charges for Residential, Datacenter, and Mobile credentials. Check organization balance, order Static ISP packages, and manage subscriptions, proxies, rotations, and source-IP authorization.",
+    "description": "Manage proxy usage, wallet balance, orders, subscriptions, rotations, and IP authorization. Your API key selects the workspace; do not send an organization ID.",
     "license": {
       "name": "Proprietary",
       "identifier": "LicenseRef-Proprietary"
@@ -55,33 +55,33 @@
       "get": {
         "operationId": "getProxyUsage",
         "summary": "Get bandwidth and usage charges",
-        "description": "Returns totals and per-credential usage for Residential, Datacenter, Mobile, and any legacy ISP credentials in your workspace. Omit the credential selector for all credentials, including disabled credentials and those with zero usage. Static ISP and Static Datacenter subscriptions use separate subscription IDs and are not included. Dates are UTC: from is inclusive, to is exclusive. Provide both dates or omit both for the current UTC calendar month. Maximum range: 366 days. wallet_spent_cents counts only actual wallet usage debits, attributed to the start of the usage window. Older debits without a usage window use their posting date. Package-funded traffic does not create a wallet usage charge; package purchases and static subscription fees are excluded. Recent usage and charges may take a short time to appear. The API key determines the workspace; do not send an organization ID.",
+        "description": "Read bandwidth, requests, and wallet charges for Residential, Datacenter, Mobile, and ISP credentials. Static ISP and Static Datacenter subscriptions are excluded. Recent usage and charges may take a short time to appear.",
         "tags": ["Stats & usage"],
         "parameters": [
           {
             "name": "from", "in": "query", "required": false,
-            "description": "Inclusive UTC start date. Supply to as well. Omit both dates for the current UTC calendar month.",
+            "description": "Inclusive UTC start date. Provide both dates, or omit both for the current UTC calendar month.",
             "schema": { "type": "string", "format": "date" }, "example": "2026-04-01"
           },
           {
             "name": "to", "in": "query", "required": false,
-            "description": "Exclusive UTC end date, after from and at most 366 days later. Use the first day of the following month to include a complete calendar month.",
+            "description": "Exclusive UTC end date, after `from`, within 366 days. Use next month's first day for a full month.",
             "schema": { "type": "string", "format": "date" }, "example": "2026-05-01"
           },
           {
             "name": "credential_id", "in": "query", "required": false,
-            "description": "Select a single credential ID returned by this endpoint. Do not combine with username. A missing credential or one outside your workspace returns 404.",
+            "description": "Select one credential ID from this response. Cannot combine with `username`. Missing or inaccessible credentials return `404`.",
             "schema": { "type": "string", "format": "uuid" }
           },
           {
             "name": "username", "in": "query", "required": false,
-            "description": "Select a single base proxy username, without targeting or session suffixes. Do not combine with credential_id.",
+            "description": "Base proxy username, without targeting or session suffixes. Cannot combine with `credential_id`.",
             "schema": { "type": "string", "pattern": "^[a-zA-Z0-9_]{1,32}$" }, "example": "resi_jobs"
           }
         ],
         "responses": {
           "200": {
-            "description": "Recorded bandwidth, request counts, and wallet usage charges for the selected credentials",
+            "description": "Selected credential usage. An empty workspace returns an empty credentials array and zero totals.",
             "headers": {
               "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
               "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
@@ -114,7 +114,7 @@
       "get": {
         "operationId": "getOrganizationBalance",
         "summary": "Get organization balance",
-        "description": "Returns the USD balance shared with the DoubleData website. Add funds on the website; the API does not provide a funding endpoint.",
+        "description": "Check your USD balance, shared with the dashboard. Add funds on the website; the API has no funding endpoint.",
         "tags": ["Balance"],
         "responses": {
           "200": {
@@ -143,7 +143,7 @@
       "get": {
         "operationId": "getISPCatalog",
         "summary": "Get ISP catalog",
-        "description": "Returns shared, private, and dedicated tiers with cached country availability. A quote performs final live validation and authoritative pricing.",
+        "description": "Browse shared, private, and dedicated packages with cached country availability. Create a quote to confirm availability and price.",
         "tags": ["Catalog"],
         "responses": {
           "200": {
@@ -169,7 +169,7 @@
       "post": {
         "operationId": "createISPQuote",
         "summary": "Create an ISP quote",
-        "description": "Live-validates a package and returns a short-lived, server-priced quote. This operation does not debit the organization balance.",
+        "description": "Get a temporary quote with live availability and pricing. Your wallet is not charged.",
         "tags": ["Orders"],
         "requestBody": {
           "required": true,
@@ -217,7 +217,7 @@
       "post": {
         "operationId": "createISPOrder",
         "summary": "Confirm an ISP order",
-        "description": "Atomically debits the organization balance for a current quote before asynchronous proxy provisioning starts. Repeating confirmation for the same quote does not debit twice.",
+        "description": "Charge your wallet for a valid quote, then start asynchronous proxy setup. Confirming the same quote again never charges twice.",
         "tags": ["Orders"],
         "requestBody": {
           "required": true,
@@ -263,7 +263,7 @@
       "get": {
         "operationId": "getISPOrder",
         "summary": "Get ISP order status",
-        "description": "Returns the current provisioning state. Continue polling while status is `processing` or `outcome_unknown`.",
+        "description": "Check proxy setup progress. Keep polling while `status` is `processing` or `outcome_unknown`.",
         "tags": ["Orders"],
         "parameters": [
           { "$ref": "#/components/parameters/OrderID" }
@@ -294,7 +294,7 @@
       "get": {
         "operationId": "listISPSubscriptions",
         "summary": "List active subscriptions",
-        "description": "Returns the active Static ISP subscriptions available to your organization. Each subscription includes its current rotation allowance and IP authorization.",
+        "description": "List your active Static ISP subscriptions, including rotation allowances and IP authorization.",
         "tags": ["Subscriptions"],
         "responses": {
           "200": {
@@ -343,7 +343,7 @@
       "delete": {
         "operationId": "cancelISPSubscription",
         "summary": "Cancel subscription renewal",
-        "description": "Disables recurring renewal at the paid-period boundary. The subscription and proxies remain available strictly through `current_period_end`. Repeating the request is safe.",
+        "description": "Stop automatic renewal. Your subscription and proxies stay available until `current_period_end`. Repeating the request is safe.",
         "tags": ["Subscriptions"],
         "parameters": [
           { "$ref": "#/components/parameters/SubscriptionID" }
@@ -384,7 +384,7 @@
       "get": {
         "operationId": "listISPProxies",
         "summary": "List assigned proxies",
-        "description": "Returns every proxy currently assigned to the subscription, including complete connection credentials and rotation eligibility. Treat the returned credentials as secrets.",
+        "description": "List the subscription's assigned proxies, connection credentials, and rotation eligibility. Keep credentials secret.",
         "tags": ["Subscriptions"],
         "parameters": [
           { "$ref": "#/components/parameters/SubscriptionID" }
@@ -434,7 +434,7 @@
       "post": {
         "operationId": "createISPRotation",
         "summary": "Rotate selected IPs",
-        "description": "Submits 1–100 unique active proxy IPs for asynchronous replacement. Each replacement keeps the country of its selected IP. This operation changes live production proxies. Poll the returned status URL before using replacement connection data.",
+        "description": "Replace 1–100 unique active proxy IPs asynchronously, keeping each IP's country. This changes live proxies. Poll the returned status URL before using new connection details.",
         "tags": ["Rotations"],
         "parameters": [
           { "$ref": "#/components/parameters/SubscriptionID" }
@@ -496,7 +496,7 @@
       "get": {
         "operationId": "getISPRotation",
         "summary": "Get rotation status",
-        "description": "Returns an accepted rotation and its ordered results. Existing rotations return HTTP 200 even when the terminal status is `partially_succeeded` or `failed`.",
+        "description": "Check a rotation's status and ordered results. Existing rotations return `200`, including `partially_succeeded` and `failed` outcomes.",
         "tags": ["Rotations"],
         "parameters": [
           { "$ref": "#/components/parameters/RotationID" }
@@ -581,7 +581,7 @@
       "get": {
         "operationId": "getISPIPAuthorization",
         "summary": "Get IP authorization",
-        "description": "Returns the subscription's authorized source IP, or `null` when no IP is authorized.",
+        "description": "Read the subscription's authorized source IP, or `null` if none is set.",
         "tags": ["IP authorization"],
         "parameters": [
           { "$ref": "#/components/parameters/SubscriptionID" }
@@ -599,7 +599,7 @@
       "put": {
         "operationId": "putISPIPAuthorization",
         "summary": "Set IP authorization",
-        "description": "Creates or replaces the subscription's authorized source IP. Sending the current value is a no-op success. This operation changes live production access.",
+        "description": "Set or replace the subscription's authorized source IP. Changes live access. Sending the current IP succeeds without changes.",
         "tags": ["IP authorization"],
         "parameters": [
           { "$ref": "#/components/parameters/SubscriptionID" }
@@ -630,7 +630,7 @@
       "delete": {
         "operationId": "deleteISPIPAuthorization",
         "summary": "Remove IP authorization",
-        "description": "Removes the subscription's source-IP authorization. Repeating this operation when no IP is authorized also succeeds. This operation changes live production access.",
+        "description": "Remove the subscription's source IP authorization. Changes live access. Succeeds even when no IP is authorized.",
         "tags": ["IP authorization"],
         "parameters": [
           { "$ref": "#/components/parameters/SubscriptionID" }
@@ -745,11 +745,12 @@
     "schemas": {
       "UsageTotals": {
         "type": "object",
+        "description": "Wallet charges exclude package purchases, package-funded traffic, subscription fees, top-ups, manual adjustments, and positive ledger entries.",
         "required": ["bandwidth_bytes", "requests", "wallet_spent_cents"],
         "properties": {
-          "bandwidth_bytes": { "type": "integer", "format": "int64", "minimum": 0, "maximum": 9007199254740991, "description": "Durably recorded traffic in bytes. Divide by 1,000,000,000 for decimal GB." },
+          "bandwidth_bytes": { "type": "integer", "format": "int64", "minimum": 0, "maximum": 9007199254740991, "description": "Recorded traffic in bytes. Divide by 1,000,000,000 for decimal GB." },
           "requests": { "type": "integer", "format": "int64", "minimum": 0, "maximum": 9007199254740991, "description": "Recorded proxy request count." },
-          "wallet_spent_cents": { "type": "integer", "format": "int64", "minimum": 0, "maximum": 9007199254740991, "description": "Actual wallet usage debits in USD cents. Excludes package purchases, package-funded consumption, subscription fees, top-ups, manual adjustments, and positive ledger entries." }
+          "wallet_spent_cents": { "type": "integer", "format": "int64", "minimum": 0, "maximum": 9007199254740991, "description": "Actual usage debits (USD cents), dated by usage window start. Older debits without usage windows use their posting date." }
         }
       },
       "CredentialUsage": {
@@ -759,9 +760,9 @@
             "type": "object",
             "required": ["id", "username", "display_name", "proxy_type", "enabled"],
             "properties": {
-              "id": { "type": "string", "format": "uuid", "description": "Stable proxy credential ID, distinct from a Static ISP subscription ID." },
-              "username": { "type": "string", "description": "Base proxy username. No connection password is returned." },
-              "display_name": { "type": "string", "description": "Your custom credential name, or an empty string if none is set." },
+              "id": { "type": "string", "format": "uuid", "description": "Stable proxy credential ID, separate from static subscription IDs." },
+              "username": { "type": "string", "description": "Base proxy username. No password is returned." },
+              "display_name": { "type": "string", "description": "Your credential name, or an empty string if unset." },
               "proxy_type": { "type": "string", "enum": ["residential", "datacenter", "mobile", "isp"] },
               "enabled": { "type": "boolean", "description": "Current credential state; disabled credentials retain their usage history." }
             }
@@ -776,7 +777,7 @@
           "to": { "type": "string", "format": "date", "description": "Exclusive UTC date." },
           "currency": { "type": "string", "const": "usd" },
           "totals": { "$ref": "#/components/schemas/UsageTotals" },
-          "credentials": { "type": "array", "items": { "$ref": "#/components/schemas/CredentialUsage" }, "description": "Selected current credentials ordered by username and ID. Deleted credentials are excluded. An empty workspace returns an empty array and zero totals." }
+          "credentials": { "type": "array", "items": { "$ref": "#/components/schemas/CredentialUsage" }, "description": "All current credentials unless filtered, including disabled and unused ones. Excludes deleted credentials. Ordered by username, then ID." }
         }
       },
       "BalanceResponse": {
@@ -863,7 +864,7 @@
           "proxy_replacements": { "type": "integer", "minimum": 0 },
           "features": {
             "type": "array",
-            "description": "Optional package features. Omit this field or send [] for no additional features. Every supplied item must be a listed enum value; empty strings are invalid. Feature availability and combinations are validated when you create the quote.",
+            "description": "Optional features; omit or send `[]` for none. Use listed nonempty values. Quotes validate availability and combinations.",
             "minItems": 0,
             "default": [],
             "example": [],
@@ -1224,7 +1225,7 @@
           "failed_count": { "type": "integer", "minimum": 0 },
           "results": {
             "type": "array",
-            "description": "Ordered results corresponding to the submitted IP order. May be absent before the result mapping is available.",
+            "description": "Results follow the submitted IP order. May be absent until results are available.",
             "items": { "$ref": "#/components/schemas/RotationResult" }
           },
           "created_at": { "type": "string", "format": "date-time" },
@@ -1332,7 +1333,7 @@
         }
       },
       "BadRequest": {
-        "description": "The ID, request body, or selected IPs are invalid.",
+        "description": "Invalid ID, request body, or selected IPs.",
         "headers": {
           "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
           "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
@@ -1402,7 +1403,7 @@
         }
       },
       "Forbidden": {
-        "description": "Organization verification is required for the order.",
+        "description": "Verify your organization before ordering.",
         "headers": {
           "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
           "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
@@ -1426,7 +1427,7 @@
         }
       },
       "Conflict": {
-        "description": "The quote expired, the request conflicts with existing state, or another subscription mutation is in progress.",
+        "description": "Quote expired, conflicting request, or another subscription change is running.",
         "headers": {
           "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
           "Cache-Control": { "$ref": "#/components/headers/CacheControl" }
@@ -1438,7 +1439,7 @@
         }
       },
       "TooManyRequests": {
-        "description": "The request rate limit or rotation allowance was reached.",
+        "description": "Request limit or rotation allowance reached.",
         "headers": {
           "Retry-After": { "$ref": "#/components/headers/RateLimitRetryAfter" },
           "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
@@ -1463,7 +1464,7 @@
         }
       },
       "ServiceUnavailable": {
-        "description": "The API is unavailable at the moment.",
+        "description": "The API is temporarily unavailable.",
         "headers": {
           "X-Request-ID": { "$ref": "#/components/headers/RequestID" },
           "Cache-Control": { "$ref": "#/components/headers/CacheControl" }

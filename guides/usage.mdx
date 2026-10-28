@@ -1,76 +1,36 @@
 ---
 title: "Check proxy usage"
-description: "Read bandwidth, request counts, and wallet usage charges for Residential, Datacenter, and Mobile credentials."
+description: "Read bandwidth, requests, and wallet usage charges."
 ---
 
-Use `GET /usage` to monitor every proxy credential in your workspace or select one by its base username or credential ID. Residential, Datacenter, and Mobile credentials use the same endpoint and your existing organization API key.
+Use `GET /usage` for Residential, Datacenter, Mobile, and ISP credentials. Static ISP and Static Datacenter subscriptions are excluded. Your API key selects the workspace; omit organization IDs.
 
-## Check your workspace
+## Read usage
 
 ```bash
 curl 'https://app.proxy.doubledata.com/api/v1/usage?from=2026-04-01&to=2026-05-01' \
   -H "Authorization: Bearer $DOUBLEDATA_API_KEY"
 ```
 
-The response includes totals for your current credentials and one record per credential, including disabled credentials and credentials with no usage. Deleted credentials are not included. The key selects your workspace; do not send an organization ID.
+Without a selector, totals cover all current credentials, including disabled and unused ones. Deleted credentials are excluded; passwords are never returned.
 
-```json
-{
-  "from": "2026-04-01",
-  "to": "2026-05-01",
-  "currency": "usd",
-  "totals": {
-    "bandwidth_bytes": 4000000000,
-    "requests": 120,
-    "wallet_spent_cents": 400
-  },
-  "credentials": [
-    {
-      "id": "25974f58-6a7a-4b0d-8dd7-a89133f50762",
-      "username": "resi_jobs",
-      "display_name": "Jobs",
-      "proxy_type": "residential",
-      "enabled": true,
-      "bandwidth_bytes": 4000000000,
-      "requests": 120,
-      "wallet_spent_cents": 400
-    }
-  ]
-}
-```
+Add `username=resi_jobs` or `credential_id=<id>` from the response to select one credential. Use the base username without country, city, or session suffixes. Never combine selectors. Unknown credentials and credentials outside your workspace return `404`.
 
-This example reports **4 GB** of recorded traffic, **120 requests**, and **$4.00** in wallet usage charges. Bytes use decimal GB: `1 GB = 1,000,000,000 bytes`. Monetary values use integer USD cents.
+## Dates and units
 
-## Check one credential
+- Supply both dates in `YYYY-MM-DD` format, or omit both for the current UTC calendar month.
+- `from` is inclusive; `to` is exclusive and must follow `from`. Use May 1 to include all of April.
+- Each range can cover at most 366 days. Split longer reports into adjacent ranges.
+- `bandwidth_bytes` uses bytes: `1 GB = 1,000,000,000 bytes`. `requests` counts proxy requests. `wallet_spent_cents` uses integer USD cents.
 
-Add `username` to select the base proxy username shown in your dashboard. Omit country, city, and session suffixes.
+## Wallet usage charges
 
-```bash
-curl 'https://app.proxy.doubledata.com/api/v1/usage?username=resi_jobs&from=2026-04-01&to=2026-05-01' \
-  -H "Authorization: Bearer $DOUBLEDATA_API_KEY"
-```
+`wallet_spent_cents` counts actual usage debits, dated by usage window start. Older debits without a usage window use their posting date.
 
-Alternatively, use an `id` from the `credentials` array as `credential_id`. Supply either `username` or `credential_id`, never both. The totals then cover only that credential. A credential outside your workspace returns the same `404` as an unknown credential. Connection passwords are never returned.
-
-## Choose a date range
-
-- `from` is inclusive and `to` is exclusive. Both are UTC dates in `YYYY-MM-DD` format.
-- To include all of April, use `from=2026-04-01&to=2026-05-01`. Using `to=2026-04-30` excludes April 30.
-- Provide both dates or omit both. With neither date, you get the current UTC calendar month.
-- Each request can cover up to 366 days. Split longer reports into adjacent, non-overlapping ranges.
-
-## Understand usage charges
-
-`bandwidth_bytes` and `requests` report recorded traffic. `wallet_spent_cents` reports actual wallet usage debits attributed to the start of each usage window. Older debits without a usage window use their posting date.
-
-Package-funded traffic contributes to bandwidth and requests without creating a new wallet usage debit. A credential can therefore have positive bandwidth and zero `wallet_spent_cents`. Package purchases, recurring static subscription fees, top-ups, adjustments, and positive ledger entries are not included in this field. It is not your complete invoice total or your remaining wallet balance. Use `GET /balance` for your current balance.
+Package-funded traffic adds bandwidth and requests without a wallet debit. `wallet_spent_cents` excludes package purchases, static subscription fees, top-ups, adjustments, and positive ledger entries. It is not an invoice total or wallet balance; use `GET /balance` for your balance.
 
 <Note>
-  Recent traffic and its wallet charge may appear at different times while accounting finishes. Poll with a short interval and allow recent results to settle. The endpoint uses the read rate limit: 120 requests per minute per key by default. A `429` response includes `Retry-After`.
+  Recent traffic and charges may appear separately and take time to settle. Read limits default to 120 requests per minute per key. On `429`, follow `Retry-After`.
 </Note>
 
-Static ISP and Static Datacenter subscriptions have separate subscription identities and are not included in credential usage reports. Existing legacy ISP proxy credentials, if present in your workspace, appear with `proxy_type: "isp"`.
-
-<Card title="Bandwidth and usage charges reference" icon="chart-line" href="/api-reference/usage">
-  Explore query parameters, response fields, errors, and an interactive read-only request.
-</Card>
+See the [usage reference](/api-reference/usage) for response fields and an interactive request.

@@ -2,7 +2,7 @@
 
 ## About this project
 
-- This Mintlify site documents the public DoubleData Static ISP API.
+- This Mintlify site documents the public DoubleData proxy products, public API, and Proxy SDK.
 - Configuration lives in `docs.json` and the API contract lives in `openapi.json`.
 - The public base URL is `https://app.proxy.doubledata.com/api/v1`.
 
@@ -21,7 +21,9 @@
 
 ## Content boundaries
 
-- Document only the public bearer-token API under `/api/v1`.
+- API reference pages document only the public bearer-token API under `/api/v1`.
+- Keep Proxy SDK documentation under `sdk/`. Write concise integration documentation for application developers. Keep internal release preparation and legal-role analysis outside this public docs repository. Do not imply the Static ISP API enrolls devices or records SDK consent.
+- SDK documentation may show public integration contracts and host-app examples. Never publish SDK implementation source, private build configuration, or unpublished service endpoints.
 - Never document network suppliers, upstream accounts, internal service keys, internal headers, internal identifiers, or administrator-only service endpoints.
 - Never ask clients to send an idempotency key or organization ID.
 - Keep operational failures customer-safe. Do not expose implementation details in errors or examples.

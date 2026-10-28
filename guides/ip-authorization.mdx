@@ -1,11 +1,11 @@
 ---
 title: "Manage IP authorization"
-description: "Read, set, and remove the source IP authorized for a subscription."
+description: "Read, set, or remove a subscription's authorized source IP."
 ---
 
-Each Static ISP subscription can authorize one public IPv4 address for source-IP access.
+Each Static ISP subscription can authorize one public IPv4 address.
 
-## Read the current authorization
+## Read the current IP
 
 ```bash
 curl --request GET \
@@ -13,20 +13,16 @@ curl --request GET \
   --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
 ```
 
-The response contains the current address or `null`:
+The response contains the authorized address, or `null` if none is set:
 
 ```json
 { "ip_authorization": "192.0.2.40" }
 ```
 
-```json
-{ "ip_authorization": null }
-```
-
-## Set the authorized IP
+## Set the IP
 
 <Warning>
-  Setting a source IP changes live production access for this subscription. Confirm the address before sending the request.
+  Setting an IP changes live access. Confirm the address before sending.
 </Warning>
 
 ```bash
@@ -39,12 +35,12 @@ curl --request PUT \
   --data "{\"ip\":\"${SOURCE_IP}\"}"
 ```
 
-`PUT` creates or replaces the current address. Sending the already configured address succeeds without changing it.
+`PUT` creates or replaces the address. Sending the current address succeeds without changes.
 
-## Remove the authorized IP
+## Remove the IP
 
 <Warning>
-  Removing the source IP may interrupt clients that depend on IP-based access.
+  Removing the IP may interrupt clients using IP authorization.
 </Warning>
 
 ```bash
@@ -53,10 +49,4 @@ curl --request DELETE \
   --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
 ```
 
-A successful delete returns:
-
-```json
-{ "ip_authorization": null }
-```
-
-You can safely repeat `DELETE` when no IP is configured.
+`DELETE` returns `{"ip_authorization": null}`. Repeating it succeeds when no IP is set.

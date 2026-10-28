@@ -1,0 +1,23 @@
+/* Keep the Dashboard action on the brand green in both color schemes. */
+#topbar-cta-button a {
+  color: #ffffff !important;
+}
+
+#topbar-cta-button a > span {
+  background-color: #006c49 !important;
+}
+
+#topbar-cta-button a:hover > span {
+  background-color: #00543a !important;
+}
+
+#topbar-cta-button a div,
+#topbar-cta-button a svg {
+  color: #ffffff !important;
+}
+
+#topbar-cta-button a:focus-visible {
+  outline: 2px solid #006c49;
+  outline-offset: 4px;
+  border-radius: 0.75rem;
+}
