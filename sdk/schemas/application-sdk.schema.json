@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://doubledata.mintlify.app/sdk/schemas/application-sdk.schema.json",
+  "title": "Double Data SDK application configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "endpoint",
+    "developer_key"
+  ],
+  "properties": {
+    "endpoint": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^/@\\s?#]+(?:/[^?#]*)?$",
+      "description": "HTTPS enrollment endpoint supplied for your application."
+    },
+    "developer_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "\\S",
+      "description": "Application-scoped SDK enrollment credential. Never use the account API key."
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Optional app-scoped ID. Omit to generate one after acceptance."
+    },
+    "transport": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "tcp",
+        "quic"
+      ],
+      "default": "auto"
+    },
+    "consent_notice": {
+      "$ref": "consent-notice.schema.json",
+      "description": "Optional explicit notice for pinned integrations. Omit to use the bundled Double Data notice."
+    },
+    "session_duration_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 86400,
+      "default": 3600
+    },
+    "max_session_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "default": 104857600
+    },
+    "max_bytes_per_second": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "default": 262144
+    },
+    "max_concurrent_tasks": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 32,
+      "default": 2
+    },
+    "server_name": {
+      "type": "string",
+      "description": "Optional TLS server name override."
+    },
+    "ca_pem": {
+      "type": "string",
+      "description": "Optional additional trusted certificate PEM. System trust is always verified."
+    },
+    "allowed_targets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Optional operator restriction using exact host:port entries."
+    },
+    "allowed_ports": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 65535
+      }
+    },
+    "dial_timeout_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9223372036
+    },
+    "heartbeat_timeout_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9223372036
+    },
+    "idle_timeout_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9223372036
+    },
+    "retry_min_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9223372036
+    },
+    "retry_max_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9223372036
+    }
+  }
+}

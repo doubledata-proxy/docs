@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://doubledata.mintlify.app/sdk/schemas/consent-notice.schema.json",
+  "title": "Double Data participation notice",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "controller", "contact", "purpose", "privacy_url", "text"],
+  "properties": {
+    "version": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^\\S(?:[^\\u0000-\\u001f\\u007f]*\\S)?$", "description": "Notice revision recorded with consent. Change it when notice content changes."},
+    "title": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^\\S(?:[^\\u0000-\\u001f\\u007f]*\\S)?$", "description": "Participant-facing heading. Omission uses Share your connection."},
+    "controller": {"type": "string", "minLength": 1, "maxLength": 512},
+    "contact": {"type": "string", "minLength": 1, "maxLength": 512},
+    "purpose": {"type": "string", "minLength": 1, "maxLength": 2048},
+    "privacy_url": {"type": "string", "format": "uri", "maxLength": 4096, "pattern": "^https://[^@\\s]+$"},
+    "text": {"type": "string", "minLength": 1, "maxLength": 32768, "description": "Complete participant-facing notice, rendered without omissions."}
+  }
+}

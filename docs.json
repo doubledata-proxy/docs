@@ -132,9 +132,12 @@
         "pages": [
           "sdk/overview",
           "sdk/downloads",
+          "sdk/configuration",
           "sdk/mobile",
           "sdk/desktop",
-          "sdk/consent"
+          "sdk/ios",
+          "sdk/consent",
+          "sdk/privacy"
         ]
       }
     ]

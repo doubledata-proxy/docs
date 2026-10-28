@@ -12,8 +12,11 @@ import io.doubledata.ClientRetirement;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.json.JSONObject;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 
-/** Foreground-only sample. Configure the operator notice before distribution. */
+/** Foreground-only host example. Supply your application-sdk.json asset before use. */
 public final class MainActivity extends Activity implements DoubleDataClient.Observer {
     private static final ClientRetirement RETIREMENTS = new ClientRetirement();
     private static final ExecutorService JOIN_WORKER = Executors.newSingleThreadExecutor();
@@ -22,31 +25,25 @@ public final class MainActivity extends Activity implements DoubleDataClient.Obs
     private long requestEpoch;
     private EditText endpoint, key;
     private TextView status;
+    private JSONObject applicationConfig;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);layout.setPadding(32,32,32,32);
         endpoint = new EditText(this);endpoint.setSingleLine(true);
-        endpoint.setText("https://192.168.1.20:8443");endpoint.setHint("Backend HTTPS endpoint");layout.addView(endpoint);
+        endpoint.setHint("Configured HTTPS endpoint");layout.addView(endpoint);
         key = new EditText(this);key.setSingleLine(true);
         key.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         key.setHint("Developer key");layout.addView(key);
-        button(layout,"Review consent and start",() -> {
+        button(layout,"Review sharing options",() -> {
             try {
                 if (!visible || destroyed || creating) return;
                 if (client != null) { client.requestConsentAndStart(this);return; }
                 {
-                    JSONObject notice = new JSONObject()
-                            .put("version","sample-v1")
-                            .put("controller","Sample operator — replace before distribution")
-                            .put("contact","privacy@example.test")
-                            .put("purpose","Optional contribution of device connectivity for proxy requests")
-                            .put("privacy_url","https://example.test/privacy")
-                            .put("text","Participation is optional. Approved requests use this device's internet connection and public IP address. This consumes bandwidth, battery and power; network charges may apply. The operator receives an app-scoped device identifier and session traffic counts. Only accept if you are an adult with authority over this device and network. Decline to continue without contribution. Use Withdraw consent at any time to stop contribution. This sample limits each session to 15 minutes and 64 MiB.");
-                    JSONObject config = new JSONObject().put("endpoint",endpoint.getText().toString())
-                            .put("developer_key",key.getText().toString()).put("transport","tcp")
-                            .put("consent_notice",notice).put("session_duration_seconds",900)
-                            .put("max_session_bytes",67108864);
+                    if(applicationConfig==null)throw new IllegalStateException("Configure application-sdk.json before sharing.");
+                    JSONObject config = new JSONObject(applicationConfig.toString())
+                            .put("endpoint",endpoint.getText().toString())
+                            .put("developer_key",key.getText().toString());
                     final String configJSON = config.toString();
                     final long expected = ++requestEpoch;
                     creating = true;
@@ -74,14 +71,50 @@ public final class MainActivity extends Activity implements DoubleDataClient.Obs
         button(layout,"Stop",() -> { if (client != null) client.stop(); });
         button(layout,"Restart",() -> { if (client != null) client.restart(); });
         button(layout,"Withdraw consent",() -> { if (client != null) client.withdrawConsent(); });
-        status = new TextView(this);status.setText("Contribution is off. Review the notice to choose whether to participate.");layout.addView(status);
+        status = new TextView(this);status.setText("Sharing is off. Review your options to choose whether to participate.");layout.addView(status);
+        try {
+            applicationConfig=loadApplicationConfig();
+            endpoint.setText(applicationConfig.optString("endpoint",""));
+            key.setText(applicationConfig.optString("developer_key",""));
+        } catch(Exception error) {
+            status.setText("Configure the application-sdk.json asset before sharing.");
+        }
         setContentView(layout);
     }
     private void button(LinearLayout layout, String label, Runnable action) {
         Button button = new Button(this);button.setText(label);button.setOnClickListener(view -> action.run());layout.addView(button);
     }
-    @Override public void onStatus(String json) { status.setText(json); }
-    @Override public void onError(Exception error) { status.setText(error.toString()); }
+    private JSONObject loadApplicationConfig() throws Exception {
+        try(InputStream input=getAssets().open("application-sdk.json");
+                ByteArrayOutputStream content=new ByteArrayOutputStream()) {
+            byte[] buffer=new byte[4096];int count;
+            while((count=input.read(buffer))!=-1)content.write(buffer,0,count);
+            return new JSONObject(new String(content.toByteArray(),StandardCharsets.UTF_8));
+        }
+    }
+    @Override public void onStatus(String json) {
+        try {
+            JSONObject snapshot=new JSONObject(json);
+            String permission=snapshot.optString("consent_state","");
+            String state=snapshot.optString("state","");
+            String message;
+            if(permission.equals("withdrawn"))message="Sharing is off. Your permission has been withdrawn.";
+            else if(permission.equals("expired"))message="Sharing is off. Review your options to participate again.";
+            else if(permission.equals("declined"))message="Sharing is off. You chose not to participate.";
+            else if(permission.equals("awaiting_consent"))message="Sharing is off. Choose whether to enable sharing.";
+            else if(state.equals("running"))message="Sharing is on. Stop or withdraw whenever you choose.";
+            else if(state.equals("retrying"))message="Connection interrupted. Trying again…";
+            else if(state.equals("starting")||state.equals("registering")||state.equals("connecting"))message="Connecting to share…";
+            else if(state.equals("stopping"))message="Stopping sharing…";
+            else if(state.equals("failed"))message="Sharing could not connect. Check your connection and try again.";
+            else if(permission.equals("granted"))message="Sharing is paused. Restart when you're ready.";
+            else message="Sharing is off. Review your options to choose whether to participate.";
+            status.setText(message);
+        } catch(Exception error) { status.setText("Sharing status is unavailable."); }
+    }
+    @Override public void onError(Exception error) {
+        status.setText("Sharing could not continue. Check your connection and the application's sharing settings.");
+    }
     @Override protected void onStart() { super.onStart();visible = true; }
     private void retireCurrent() {
         ++requestEpoch;
@@ -90,6 +123,7 @@ public final class MainActivity extends Activity implements DoubleDataClient.Obs
         // closeAsync invalidates consent synchronously before its worker joins.
         RETIREMENTS.retire(client);
         client = null;
+        endpoint.setEnabled(true);key.setEnabled(true);
     }
     @Override protected void onStop() {
         visible = false;retireCurrent();super.onStop();

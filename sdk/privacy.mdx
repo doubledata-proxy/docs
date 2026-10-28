@@ -1,0 +1,26 @@
+---
+title: "SDK privacy"
+description: "How optional proxy participation uses your connection and how to stop it."
+---
+
+Double Data's proxy SDK lets you choose whether this application shares your internet connection for third-party proxy requests. Declining keeps sharing off.
+
+## When you enable sharing
+
+Proxy requests use your public IP address and network connection. Sharing consumes bandwidth, battery, and power, can affect connection performance and IP reputation, and may incur network charges. Requests run automatically while your sharing session is enabled.
+
+Double Data receives an app-scoped identifier, the connection's public IP, technical session information, traffic counts, and a consent record containing the notice version, content hash, and session times. Destination services see the connection's public IP and the requests sent through it.
+
+The SDK relays proxy traffic. It does not require access to your photos, contacts, or messages. The host application's privacy policy covers its own data collection and any additional permissions.
+
+## Your controls
+
+Choose **Decline** to continue without sharing. Use **Pause** to stop traffic or **Withdraw consent** to revoke participation. Withdrawal stops active sharing and blocks reconnection until you accept again. It does not automatically erase earlier records.
+
+Only enable sharing if you are at least 18 and authorised to use the device and connection.
+
+## Contact
+
+For privacy questions, access or deletion requests, contact [privacy@proxy.doubledata.com](mailto:privacy@proxy.doubledata.com). Include the application name and your request; do not send passwords or SDK credentials.
+
+The current participation notice is version `2026-10-28.1`. [View the notice JSON](/sdk/notices/2026-10-28.1/en.json).

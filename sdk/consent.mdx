@@ -1,22 +1,26 @@
 ---
-title: "Consent and lifecycle"
-description: "Give users a clear choice and an easy way to stop sharing."
+title: "Participation flow"
+description: "Present the Double Data notice in your app and keep sharing under the user's control."
 ---
 
-Ask users to enable proxy participation once per consent session. Individual proxy requests run automatically after acceptance.
+Double Data supplies the notice. You control its layout, typography, and native presentation. Use the complete notice returned by the SDK; do not replace its content with a checkbox or an acceptance flag.
 
-## Before sharing
+## Ask once per session
 
-Use the SDK's consent screen or a native presenter that displays the complete notice. Explain that third-party requests use the user's connection and public IP, consume data and power, and can affect connection performance. Include your operator details, privacy link, and any participation benefit.
+1. The user chooses **Enable sharing** in your application.
+2. Your built-in or custom presenter displays the purpose, complete text, operator, contact, and privacy link.
+3. **Enable sharing** records acceptance and permits the session to start. **Decline**, dismissal, or cancellation leaves sharing off.
 
-Offer clear **Enable sharing** and **Decline** choices. Dismissal also leaves sharing off. Declining must preserve your app's unrelated features. Participation is for adults authorised to use the device and connection.
+Individual proxy requests need no further prompts. Keep your app's unrelated features available after decline.
 
-## While sharing
+## Keep controls available
 
-Show current status and provide **Pause** and **Withdraw consent** controls. Set the session duration, byte budget, transfer rate, and concurrency for your app. Starting or retrying requires current consent.
+Display sharing status and offer **Pause** and **Withdraw consent**. Set session duration and traffic limits in [configuration](/sdk/configuration). Pause stops traffic; resuming still requires current consent and remaining quota.
 
-## When users withdraw
+Withdrawal invalidates permission immediately, stops active work, and blocks reconnection. A new session requires another affirmative choice. Close the client when its owner exits, and await cleanup off the UI thread before creating a replacement.
 
-Call `withdrawConsent()` on Android or `DoubleDataWithdrawConsent` through the native API. The SDK invalidates permission, cancels active work, and blocks reconnection. A new consent interaction is required before sharing again.
+## Use your own screen
 
-Close the client when its owner exits, and await cleanup before creating its replacement. Do not substitute an always-accept callback for the user's choice.
+Android uses `ConsentPresenter`; desktop uses the C consent callback; Swift uses a cancellable consent prompt. Present the supplied JSON with your app's styling and return acceptance only after the person's explicit action. Cancellation must dismiss the screen and release any waiting callback.
+
+The SDK records the notice version and content hash with consent. These are receipt metadata, not participant-facing copy. [Current notice](/sdk/notices/2026-10-28.1/en.json) · [Privacy](/sdk/privacy).
