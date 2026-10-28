@@ -1,9 +1,9 @@
 ---
 title: "iOS and Swift"
-description: "Use SwiftUI to present the Double Data notice and manage native SDK participation."
+description: "Use SwiftUI to present the DoubleData notice and manage native SDK participation."
 ---
 
-Download [DoubleDataClient.swift](https://github.com/doubledata-proxy/docs/releases/download/sdk-v1.0.0/DoubleDataClient.swift) and the [complete SwiftUI example](https://github.com/doubledata-proxy/docs/releases/download/sdk-v1.0.0/SharingExample.swift). Add them and your configured [application-sdk.json](/sdk/configuration) to an iOS 15+ app.
+Download [DoubleDataClient.swift](https://github.com/doubledata-proxy/docs/releases/download/sdk-v1.0.1/DoubleDataClient.swift) and the [complete SwiftUI example](https://github.com/doubledata-proxy/docs/releases/download/sdk-v1.0.1/SharingExample.swift). Add them and your configured [application-sdk.json](/sdk/configuration) to an iOS 15+ app.
 
 The examples require an iOS XCFramework exposing the SDK's `DoubleDataProxy` C module. Swift examples are included in this release; a prebuilt iOS XCFramework is not included. Add a compatible static framework to your Xcode target with **Do Not Embed**.
 
@@ -13,7 +13,7 @@ The examples require an iOS XCFramework exposing the SDK's `DoubleDataProxy` C m
 let client = try await DoubleDataClient.create(configurationJSON: configJSON)
 ```
 
-The client is inactive. The SDK supplies the Double Data notice, privacy link, and version.
+The client is inactive. The SDK supplies the DoubleData notice, privacy link, and version.
 
 ## Show your SwiftUI screen
 

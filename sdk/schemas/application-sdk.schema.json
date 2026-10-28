@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://doubledata.mintlify.app/sdk/schemas/application-sdk.schema.json",
-  "title": "Double Data SDK application configuration",
+  "title": "DoubleData SDK application configuration",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -39,7 +39,7 @@
     },
     "consent_notice": {
       "$ref": "consent-notice.schema.json",
-      "description": "Optional explicit notice for pinned integrations. Omit to use the bundled Double Data notice."
+      "description": "Optional explicit notice for pinned integrations. Omit to use the bundled DoubleData notice."
     },
     "session_duration_seconds": {
       "type": "integer",

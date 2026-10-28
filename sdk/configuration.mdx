@@ -1,6 +1,6 @@
 ---
 title: "Configuration"
-description: "Configure your application and use the SDK-supplied Double Data notice."
+description: "Configure your application and use the SDK-supplied DoubleData notice."
 ---
 
 Download [application-sdk.json](/sdk/examples/application-sdk.json), then fill in `endpoint` and `developer_key` with the SDK settings assigned to your application. Blank values fail validation and start no traffic.
@@ -21,18 +21,18 @@ Use an app-scoped SDK enrollment credential. Your account REST API key is not an
 
 ## Participation notice
 
-Omit `consent_notice` to use the bundled Double Data notice. You do not need to author participation text or pass an acceptance flag.
+Omit `consent_notice` to use the bundled DoubleData notice. You do not need to author participation text or pass an acceptance flag.
 
 | Field | Value or purpose |
 | --- | --- |
 | `title` | Share your connection |
-| `version` | `2026-10-28.1`; recorded with consent, not displayed as UI copy. |
-| `controller` | Double Data |
+| `version` | `2026-10-28.2`; recorded with consent, not displayed as UI copy. |
+| `controller` | DoubleData |
 | `contact` | `privacy@proxy.doubledata.com` |
 | `purpose`, `text` | The full participation explanation supplied by the SDK. |
 | `privacy_url` | [SDK privacy information](/sdk/privacy) |
 
-[Download the notice JSON](/sdk/notices/2026-10-28.1/en.json). Render its complete content in your own styling, or use the built-in presenter. Bundle the notice with your application; consent does not require a pre-consent notice fetch.
+[Download the notice JSON](/sdk/notices/2026-10-28.2/en.json). Render its complete content in your own styling, or use the built-in presenter. Bundle the notice with your application; consent does not require a pre-consent notice fetch.
 
 When updating from an older integration, remove its hardcoded `consent_notice` to use the current SDK notice. An explicit notice remains supported for pinned integrations. Notice changes require a fresh consent interaction.
 
