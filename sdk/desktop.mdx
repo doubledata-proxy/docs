@@ -1,34 +1,60 @@
 ---
 title: "Desktop"
-description: "Embed the native SDK with consent, status, and withdrawal controls."
+description: "Use the native SDK with your own UI, consent callback, status, and withdrawal controls."
 ---
 
-[Download](/sdk/downloads) the package matching your application architecture. Native packages include the library and `doubledata_proxy.h`; use the C ABI from C, C++, C#, Python, or another language with native bindings.
+[Download](/sdk/downloads) the native package for your architecture. Linux x86_64 includes `libdoubledata_proxy.so`; Windows x86_64 includes `doubledata_proxy.dll`. Both include `doubledata_proxy.h`.
 
-## Client lifecycle
+## Run the desktop example
 
-| Call | Action |
-| --- | --- |
-| `DoubleDataCreate` | Create an inactive client from configuration JSON. |
-| `DoubleDataRequestConsent` | Show the SDK notice in your UI and record the user's choice. |
-| `DoubleDataStart` | Start sharing with current consent. |
-| `DoubleDataStatus` | Read connection state, consent, and usage. |
-| `DoubleDataStop` | Pause sharing. |
-| `DoubleDataWithdrawConsent` | Revoke consent and stop sharing. |
-| `DoubleDataDestroy` | Close the client and release resources. |
-
-The public header specifies argument types and memory ownership. Free returned strings with `DoubleDataFreeString`.
-
-## Add consent UI
-
-Show the complete notice with clear accept and decline controls. Keep status and withdrawal visible while sharing. Close the client when its owner exits.
-
-The [Python desktop example](https://github.com/doubledata-proxy/docs/releases/download/sdk-build-2026-10-28/desktop.py) provides a scrollable consent dialog, usage display, pause, withdrawal, and shutdown:
+Download [desktop.py](https://github.com/doubledata-proxy/docs/releases/download/sdk-v1.0.0/desktop.py) and configure [application-sdk.json](/sdk/configuration):
 
 ```bash
-python3 desktop.py   --library /absolute/path/to/libdoubledata_proxy.so   --config /absolute/path/to/application-sdk.json
+python3 desktop.py \
+  --library /absolute/path/to/libdoubledata_proxy.so \
+  --config /absolute/path/to/application-sdk.json
 ```
 
-On Windows, use `doubledata_proxy.dll`. The example uses Python 3 and Tkinter.
+The Python 3/Tkinter example provides a scrollable notice, clickable privacy link, sharing status, pause, and withdrawal. On Windows, pass the DLL path.
 
-Configuration includes `endpoint`, `developer_key`, and `consent_notice`. Use SDK enrollment credentials for your app and keep account API keys private. [Consent and lifecycle](/sdk/consent).
+## Embed the example UI
+
+```python
+import tkinter as tk
+from desktop import App
+
+window = tk.Tk()
+app = App(window, "./libdoubledata_proxy.so", "./application-sdk.json")
+window.mainloop()
+```
+
+The native client supplies the Double Data notice. No application-authored notice or acceptance flag is required.
+
+## Use your own presenter
+
+```python
+def show_consent(window, notice):
+    # Render every notice field in your app's UI and wait for a choice.
+    return sharing_dialog.show_and_wait(window, notice)
+
+app = App(window, library_path, config_path, present_consent=show_consent)
+```
+
+`sharing_dialog` is your app's UI bridge. Return `True` only after explicit acceptance and `False` for decline or dismissal. Keep the complete text, operator, contact, and privacy link accessible. Use the full example for cancellation and shutdown handling.
+
+## Call the C API
+
+```c
+uint64_t handle = 0;
+char *error = NULL;
+if (DoubleDataCreate(config_json, &handle, &error) == 0) {
+    /* Run consent presentation on a worker; post the UI to main. */
+    if (DoubleDataRequestConsent(handle, present_notice, context, &error) == 0) {
+        DoubleDataStart(handle, &error);
+    }
+}
+```
+
+`present_notice` receives the full JSON and returns `DOUBLEDATA_CONSENT_ACCEPT`, `DOUBLEDATA_CONSENT_DECLINE`, or `DOUBLEDATA_CONSENT_DISMISS` from the user's choice. Free each returned error or status string with `DoubleDataFreeString` before reusing its pointer.
+
+Pause with `DoubleDataStop`, withdraw with `DoubleDataWithdrawConsent`, and close with `DoubleDataDestroy`. Await cleanup off the UI thread; retry destroy if cleanup fails. [Participation flow](/sdk/consent).

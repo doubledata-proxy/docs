@@ -1,0 +1,54 @@
+---
+title: "iOS and Swift"
+description: "Use SwiftUI to present the Double Data notice and manage native SDK participation."
+---
+
+Download [DoubleDataClient.swift](https://github.com/doubledata-proxy/docs/releases/download/sdk-v1.0.0/DoubleDataClient.swift) and the [complete SwiftUI example](https://github.com/doubledata-proxy/docs/releases/download/sdk-v1.0.0/SharingExample.swift). Add them and your configured [application-sdk.json](/sdk/configuration) to an iOS 15+ app.
+
+The examples require an iOS XCFramework exposing the SDK's `DoubleDataProxy` C module. Swift examples are included in this release; a prebuilt iOS XCFramework is not included. Add a compatible static framework to your Xcode target with **Do Not Embed**.
+
+## Create a client
+
+```swift
+let client = try await DoubleDataClient.create(configurationJSON: configJSON)
+```
+
+The client is inactive. The SDK supplies the Double Data notice, privacy link, and version.
+
+## Show your SwiftUI screen
+
+```swift
+try await client.requestConsentAndStart { prompt in
+    model.prompt = prompt
+}
+```
+
+`model` owns your presentation state. The callback runs on the main actor. Render the full supplied `prompt.notice` with your own layout:
+
+```swift
+Text(prompt.notice.displayTitle).font(.title)
+Text(prompt.notice.purpose)
+Text(prompt.notice.text)
+Text(prompt.notice.controller)
+Text(prompt.notice.contact)
+Link("Privacy policy", destination: prompt.notice.privacyURL)
+
+Button("Enable sharing") { prompt.choose(.accept) }
+Button("Decline") { prompt.choose(.decline) }
+```
+
+Call `prompt.choose(.dismiss)` when the screen is dismissed. Only an explicit acceptance can start sharing. The complete example handles sheet dismissal and keeps actions accessible below a scrollable notice.
+
+## Stop and withdraw
+
+```swift
+try await client.stop()
+
+client.cancelPendingConsent() // Immediately revoke permission; no network wait.
+try await client.withdrawConsent()
+try await client.close()
+```
+
+On backgrounding, cancel pending presentation and withdraw. Await `close()` before replacing a client; retry it if cleanup fails. Native work runs off the UI thread.
+
+The portable wrapper is tested against the native C ABI. Apple SDK compilation and device testing remain required for your iOS build. [Participation flow](/sdk/consent).

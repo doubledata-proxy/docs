@@ -1,0 +1,9 @@
+{
+  "endpoint": "",
+  "developer_key": "",
+  "transport": "auto",
+  "session_duration_seconds": 3600,
+  "max_session_bytes": 104857600,
+  "max_bytes_per_second": 262144,
+  "max_concurrent_tasks": 2
+}
