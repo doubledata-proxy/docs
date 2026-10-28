@@ -1,0 +1,27 @@
+---
+title: "ISP proxies"
+description: "Manage Static ISP subscriptions, connection details, rotations, and IP authorization."
+---
+
+Use the ISP endpoints to purchase and manage Static ISP proxies. Authenticate with your organization API key.
+
+| Task | Endpoint |
+| --- | --- |
+| Check availability | `GET /isp/catalog` |
+| Quote a package | `POST /isp/quotes` |
+| Confirm an order | `POST /isp/orders` |
+| Track provisioning | `GET /isp/orders/{orderId}` |
+| List subscriptions | `GET /isp/subscriptions` |
+| Retrieve connection details | `GET /isp/subscriptions/{subscriptionId}/proxies` |
+| Cancel renewal | `DELETE /isp/subscriptions/{subscriptionId}` |
+| Rotate selected IPs | `POST /isp/subscriptions/{subscriptionId}/rotations` |
+| Track a rotation | `GET /isp/rotations/{rotationId}` |
+| Manage source-IP authorization | `GET`, `PUT`, `DELETE /isp/subscriptions/{subscriptionId}/ip-authorization` |
+
+<Warning>
+  Order confirmation debits your balance. Subscription, rotation, and authorization mutations change live resources. Review the operation before using the production playground.
+</Warning>
+
+Connect using the host, port, username, and password returned for your subscription. Keep those values intact; do not substitute a shared gateway or append gateway session parameters.
+
+Start with the [ordering guide](/guides/ordering), [rotation workflow](/guides/rotations), or [IP authorization guide](/guides/ip-authorization). The shared [balance endpoint](/api-reference/balance/get-organization-balance) reports your available USD balance.

@@ -1,0 +1,26 @@
+---
+title: "Mobile proxies"
+description: "Connect to the mobile network with country targeting and optional sticky sessions."
+---
+
+Use your Mobile proxy username and password from the dashboard. Mobile supports country targeting and sticky sessions; do not add a city parameter.
+
+| Protocol | Europe gateway | US gateway |
+| --- | --- | --- |
+| HTTP | `proxy.doubledata.com:7777` | `us.proxy.doubledata.com:7777` |
+| HTTPS | `proxy.doubledata.com:9999` | `us.proxy.doubledata.com:9999` |
+| SOCKS5 | `proxy.doubledata.com:8888` | `us.proxy.doubledata.com:8888` |
+
+Append `-country-us` to select a country, `-session-c3d4e5f6` for a sticky session, and optionally `-ttl-30` to request a 1–120 minute lifetime. TTL requires a session ID. Keep your password unchanged.
+
+<Warning>
+  This request uses your live proxy credentials and consumes traffic.
+</Warning>
+
+```bash
+curl --proxy https://us.proxy.doubledata.com:9999 \
+  --proxy-user "${DOUBLEDATA_PROXY_USERNAME}-country-us-session-c3d4e5f6:${DOUBLEDATA_PROXY_PASSWORD}" \
+  https://ipinfo.io/ip
+```
+
+Read bandwidth and charges through the shared [usage endpoint](/api-reference/usage). See [connection formats](/guides/proxy-formats) and [session rules](/guides/sticky-sessions).

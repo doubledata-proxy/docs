@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "DoubleData API",
+  "name": "Double Data Proxy Docs",
   "colors": {
     "primary": "#006C49",
     "light": "#007C55",
@@ -19,7 +19,12 @@
     },
     "url": "full",
     "examples": {
-      "languages": ["curl", "javascript", "go", "python"],
+      "languages": [
+        "curl",
+        "javascript",
+        "go",
+        "python"
+      ],
       "defaults": "required",
       "prefill": true,
       "autogenerate": true
@@ -29,39 +34,107 @@
     "groups": [
       {
         "group": "Get started",
-        "pages": ["index", "quickstart", "authentication"]
+        "pages": [
+          "index",
+          "quickstart",
+          "authentication"
+        ]
       },
       {
         "group": "Proxy connections",
-        "pages": ["guides/proxy-formats", "guides/sticky-sessions"]
+        "pages": [
+          "guides/proxy-formats",
+          "guides/sticky-sessions"
+        ]
       },
       {
         "group": "Workflows",
-        "pages": ["guides/ordering", "guides/rotations", "guides/ip-authorization", "errors"]
-      },
-      {
-        "group": "Stats & usage",
-        "openapi": "openapi.json",
-        "pages": ["guides/usage", "api-reference/usage"]
+        "pages": [
+          "guides/usage",
+          "guides/ordering",
+          "guides/rotations",
+          "guides/ip-authorization",
+          "errors"
+        ]
       },
       {
         "group": "API reference",
         "openapi": "openapi.json",
         "pages": [
           "api-reference/introduction",
-          "GET /balance",
-          "GET /isp/catalog",
-          "POST /isp/quotes",
-          "POST /isp/orders",
-          "GET /isp/orders/{orderId}",
-          "GET /isp/subscriptions",
-          "DELETE /isp/subscriptions/{subscriptionId}",
-          "GET /isp/subscriptions/{subscriptionId}/proxies",
-          "POST /isp/subscriptions/{subscriptionId}/rotations",
-          "GET /isp/rotations/{rotationId}",
-          "GET /isp/subscriptions/{subscriptionId}/ip-authorization",
-          "PUT /isp/subscriptions/{subscriptionId}/ip-authorization",
-          "DELETE /isp/subscriptions/{subscriptionId}/ip-authorization"
+          {
+            "group": "All proxies",
+            "pages": [
+              "api-reference/usage",
+              "GET /balance"
+            ]
+          },
+          {
+            "group": "Residential",
+            "pages": [
+              "api-reference/residential"
+            ]
+          },
+          {
+            "group": "Datacenter",
+            "pages": [
+              "api-reference/datacenter"
+            ]
+          },
+          {
+            "group": "Mobile",
+            "pages": [
+              "api-reference/mobile"
+            ]
+          },
+          {
+            "group": "ISP",
+            "pages": [
+              "api-reference/isp",
+              {
+                "group": "Catalog and orders",
+                "pages": [
+                  "GET /isp/catalog",
+                  "POST /isp/quotes",
+                  "POST /isp/orders",
+                  "GET /isp/orders/{orderId}"
+                ]
+              },
+              {
+                "group": "Subscriptions",
+                "pages": [
+                  "GET /isp/subscriptions",
+                  "GET /isp/subscriptions/{subscriptionId}/proxies",
+                  "DELETE /isp/subscriptions/{subscriptionId}"
+                ]
+              },
+              {
+                "group": "Rotations",
+                "pages": [
+                  "POST /isp/subscriptions/{subscriptionId}/rotations",
+                  "GET /isp/rotations/{rotationId}"
+                ]
+              },
+              {
+                "group": "IP authorization",
+                "pages": [
+                  "GET /isp/subscriptions/{subscriptionId}/ip-authorization",
+                  "PUT /isp/subscriptions/{subscriptionId}/ip-authorization",
+                  "DELETE /isp/subscriptions/{subscriptionId}/ip-authorization"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "group": "Proxy SDK",
+        "pages": [
+          "sdk/overview",
+          "sdk/downloads",
+          "sdk/mobile",
+          "sdk/desktop",
+          "sdk/consent"
         ]
       }
     ]
@@ -74,6 +147,18 @@
     }
   },
   "contextual": {
-    "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "interaction": {
+    "drilldown": false
   }
 }

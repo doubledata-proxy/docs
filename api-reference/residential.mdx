@@ -1,0 +1,39 @@
+---
+title: "Residential proxies"
+description: "Connect to the residential network and configure location targeting and sticky sessions."
+---
+
+Use your Residential proxy username and password from the dashboard. The credential selects the residential network; country, city, and session parameters control the connection.
+
+## Connection
+
+| Protocol | Europe gateway | US gateway |
+| --- | --- | --- |
+| HTTP | `proxy.doubledata.com:7777` | `us.proxy.doubledata.com:7777` |
+| HTTPS | `proxy.doubledata.com:9999` | `us.proxy.doubledata.com:9999` |
+| SOCKS5 | `proxy.doubledata.com:8888` | `us.proxy.doubledata.com:8888` |
+
+Choose the gateway nearest your application. Use a country parameter to select the exit location.
+
+## Username parameters
+
+| Parameter | Example | Behaviour |
+| --- | --- | --- |
+| Country | `-country-us` | Request an exit in that country. |
+| City | `-city-newyork` | Select a supported city within the country. |
+| Session | `-session-a1b2c3d4` | Reuse a sticky session for related connections. |
+| Lifetime | `-ttl-30` | Request 1–120 minutes; requires a session ID. |
+
+Keep your password unchanged. Omit session and TTL to allow rotation on new connections. Sticky IP persistence is best effort.
+
+<Warning>
+  This request uses your live proxy credentials and consumes traffic.
+</Warning>
+
+```bash
+curl --proxy https://proxy.doubledata.com:9999 \
+  --proxy-user "${DOUBLEDATA_PROXY_USERNAME}-country-us-session-a1b2c3d4-ttl-30:${DOUBLEDATA_PROXY_PASSWORD}" \
+  https://ipinfo.io/ip
+```
+
+For REST usage reporting, use the shared [usage endpoint](/api-reference/usage) with the base username, without targeting or session suffixes. See [connection formats](/guides/proxy-formats) and [session rules](/guides/sticky-sessions).

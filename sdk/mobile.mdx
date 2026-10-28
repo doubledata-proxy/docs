@@ -1,0 +1,43 @@
+---
+title: "Android"
+description: "Add the SDK and enable sharing through the built-in consent dialog."
+---
+
+## Install
+
+[Download the Android AAR](/sdk/downloads), rename it to `doubledata-proxy.aar`, and place it in `app/libs/`. Add it to `app/build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation(files("libs/doubledata-proxy.aar"))
+}
+```
+
+The package supports Android API 23+ with ARMv7, ARM64, x86, and x86_64 binaries.
+
+## Create a client
+
+Provide your application configuration as JSON, including `endpoint`, `developer_key`, and `consent_notice`. The notice contains `version`, `controller`, `contact`, `purpose`, `privacy_url`, and `text`.
+
+```java
+import io.doubledata.DoubleDataClient;
+
+DoubleDataClient client = new DoubleDataClient(configurationJSON,
+    new DoubleDataClient.Observer() {
+        public void onStatus(String json) { updateSharingStatus(json); }
+        public void onError(Exception error) { showError(error.getMessage()); }
+    });
+
+enableButton.setOnClickListener(v -> client.requestConsentAndStart(this));
+withdrawButton.setOnClickListener(v -> client.withdrawConsent());
+```
+
+Call the consent flow from a user action. The SDK shows the notice, accepts or declines the choice, and starts only after acceptance. Requests then run automatically.
+
+## Handle the app lifecycle
+
+Keep sharing status and withdrawal accessible. Stop sharing when your application's sharing screen leaves the foreground. Use `closeAsync()` and await completion on a worker before replacing a client.
+
+The [complete Activity example](https://github.com/doubledata-proxy/docs/releases/download/sdk-build-2026-10-28/MainActivity.java) handles consent, withdrawal, foreground changes, and Activity recreation.
+
+Use an SDK enrollment credential intended for your app. Keep account API keys and administrator credentials out of the APK.

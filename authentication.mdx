@@ -21,6 +21,10 @@ curl --request GET \
   Regenerating the organization key invalidates the previous key immediately. Update every client that uses the old key.
 </Warning>
 
+## Proxy connections
+
+Use your proxy username and password for HTTP, HTTPS, and SOCKS5 connections. The account API key authenticates REST requests; it is not a proxy password. [Connection formats](/guides/proxy-formats).
+
 ## Keep the key secure
 
 - Store it in a secret manager or protected environment variable.

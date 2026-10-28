@@ -1,0 +1,39 @@
+---
+title: "Datacenter proxies"
+description: "Connect to the datacenter network and configure location and session parameters."
+---
+
+Use a Datacenter proxy credential from your dashboard. Country, city, and session parameters use the same syntax as Residential proxies.
+
+## Connection
+
+| Protocol | Europe gateway | US gateway |
+| --- | --- | --- |
+| HTTP | `proxy.doubledata.com:7777` | `us.proxy.doubledata.com:7777` |
+| HTTPS | `proxy.doubledata.com:9999` | `us.proxy.doubledata.com:9999` |
+| SOCKS5 | `proxy.doubledata.com:8888` | `us.proxy.doubledata.com:8888` |
+
+The gateway selects where your application connects. The country parameter selects the exit country.
+
+## Username parameters
+
+| Parameter | Example | Behaviour |
+| --- | --- | --- |
+| Country | `-country-de` | Request an exit in that country. |
+| City | `-city-<city>` | Select a supported city from the dashboard generator. |
+| Session | `-session-b2c3d4e5` | Reuse a sticky session. |
+| Lifetime | `-ttl-30` | Request 1–120 minutes; requires a session ID. |
+
+Keep the password, gateway, and targeting parameters unchanged during a session. Omit session and TTL for rotating connections.
+
+<Warning>
+  This request uses your live proxy credentials and consumes traffic.
+</Warning>
+
+```bash
+curl --proxy https://proxy.doubledata.com:9999 \
+  --proxy-user "${DOUBLEDATA_PROXY_USERNAME}-country-de-session-b2c3d4e5:${DOUBLEDATA_PROXY_PASSWORD}" \
+  https://ipinfo.io/ip
+```
+
+Read usage through the shared [usage endpoint](/api-reference/usage). Static Datacenter subscriptions are separate from these gateway credentials and are excluded from credential usage reports. [Connection formats](/guides/proxy-formats) · [Session rules](/guides/sticky-sessions).

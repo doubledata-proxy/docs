@@ -1,0 +1,34 @@
+---
+title: "Desktop"
+description: "Embed the native SDK with consent, status, and withdrawal controls."
+---
+
+[Download](/sdk/downloads) the package matching your application architecture. Native packages include the library and `doubledata_proxy.h`; use the C ABI from C, C++, C#, Python, or another language with native bindings.
+
+## Client lifecycle
+
+| Call | Action |
+| --- | --- |
+| `DoubleDataCreate` | Create an inactive client from configuration JSON. |
+| `DoubleDataRequestConsent` | Show the SDK notice in your UI and record the user's choice. |
+| `DoubleDataStart` | Start sharing with current consent. |
+| `DoubleDataStatus` | Read connection state, consent, and usage. |
+| `DoubleDataStop` | Pause sharing. |
+| `DoubleDataWithdrawConsent` | Revoke consent and stop sharing. |
+| `DoubleDataDestroy` | Close the client and release resources. |
+
+The public header specifies argument types and memory ownership. Free returned strings with `DoubleDataFreeString`.
+
+## Add consent UI
+
+Show the complete notice with clear accept and decline controls. Keep status and withdrawal visible while sharing. Close the client when its owner exits.
+
+The [Python desktop example](https://github.com/doubledata-proxy/docs/releases/download/sdk-build-2026-10-28/desktop.py) provides a scrollable consent dialog, usage display, pause, withdrawal, and shutdown:
+
+```bash
+python3 desktop.py   --library /absolute/path/to/libdoubledata_proxy.so   --config /absolute/path/to/application-sdk.json
+```
+
+On Windows, use `doubledata_proxy.dll`. The example uses Python 3 and Tkinter.
+
+Configuration includes `endpoint`, `developer_key`, and `consent_notice`. Use SDK enrollment credentials for your app and keep account API keys private. [Consent and lifecycle](/sdk/consent).

@@ -1,0 +1,22 @@
+---
+title: "Consent and lifecycle"
+description: "Give users a clear choice and an easy way to stop sharing."
+---
+
+Ask users to enable proxy participation once per consent session. Individual proxy requests run automatically after acceptance.
+
+## Before sharing
+
+Use the SDK's consent screen or a native presenter that displays the complete notice. Explain that third-party requests use the user's connection and public IP, consume data and power, and can affect connection performance. Include your operator details, privacy link, and any participation benefit.
+
+Offer clear **Enable sharing** and **Decline** choices. Dismissal also leaves sharing off. Declining must preserve your app's unrelated features. Participation is for adults authorised to use the device and connection.
+
+## While sharing
+
+Show current status and provide **Pause** and **Withdraw consent** controls. Set the session duration, byte budget, transfer rate, and concurrency for your app. Starting or retrying requires current consent.
+
+## When users withdraw
+
+Call `withdrawConsent()` on Android or `DoubleDataWithdrawConsent` through the native API. The SDK invalidates permission, cancels active work, and blocks reconnection. A new consent interaction is required before sharing again.
+
+Close the client when its owner exits, and await cleanup before creating its replacement. Do not substitute an always-accept callback for the user's choice.

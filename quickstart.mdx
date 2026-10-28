@@ -1,69 +1,32 @@
 ---
 title: "Quickstart"
-description: "Authenticate and make your first read-only API request."
+description: "Authenticate and read usage for your proxy credentials."
 ---
 
-This quickstart lists the active Static ISP subscriptions available to your organization.
-
-## Before you begin
-
-You need an active DoubleData organization, an active Static ISP subscription, and your organization's API key. An organization administrator creates the key in the dashboard.
+Make your first read-only API request with your organization API key. You can use the same key across proxy products.
 
 <Steps>
-  <Step title="Store your API key">
-    Keep the key in an environment variable so it does not appear directly in commands or source files.
+  <Step title="Get your API key">
+    An organization administrator creates the key in the dashboard. Store it in an environment variable:
 
     ```bash
     export DOUBLEDATA_API_KEY="your_api_key"
     ```
   </Step>
-
-  <Step title="List active subscriptions">
-    Send the key in the `Authorization` header.
+  <Step title="Read proxy usage">
+    This returns workspace totals and per-credential usage for the current UTC month.
 
     ```bash
     curl --request GET \
-      --url https://app.proxy.doubledata.com/api/v1/isp/subscriptions \
+      --url https://app.proxy.doubledata.com/api/v1/usage \
       --header "Authorization: Bearer ${DOUBLEDATA_API_KEY}"
     ```
   </Step>
-
-  <Step title="Choose a subscription">
-    Save an `id` from the response for subscription-specific requests.
-
-    ```json
-    {
-      "subscriptions": [
-        {
-          "id": "25974f58-6a7a-4b0d-8dd7-a89133f50762",
-          "tier": "dedicated",
-          "countries": [{ "country": "US", "quantity": 2 }],
-          "status": "active",
-          "proxy_count": 2,
-          "current_period_start": "2026-08-01T00:00:00Z",
-          "current_period_end": "2026-09-01T00:00:00Z",
-          "rotations_total": 20,
-          "rotations_remaining": 14,
-          "rotations_reset_at": "2026-09-01T00:00:00Z",
-          "rotation_in_progress": false,
-          "ip_authorization": null
-        }
-      ]
-    }
-    ```
+  <Step title="Choose your product">
+    Use [Residential](/api-reference/residential), [Datacenter](/api-reference/datacenter), or [Mobile](/api-reference/mobile) for gateway connection parameters. Use [ISP](/api-reference/isp) for Static ISP purchasing and subscription management.
   </Step>
 </Steps>
 
-`rotations_remaining` counts individual IP replacements, not requests. A successful five-IP rotation consumes five rotation units.
+The usage response reports bandwidth in bytes, request counts, and wallet usage charges in USD cents. Static subscriptions use separate subscription records. [Usage reference](/api-reference/usage).
 
-<CardGroup cols={3}>
-  <Card title="Authentication" icon="key" href="/authentication">
-    Learn how the organization API key is managed.
-  </Card>
-  <Card title="Ordering workflow" icon="cart-shopping" href="/guides/ordering">
-    Buy a package from your organization balance.
-  </Card>
-  <Card title="Rotation workflow" icon="rotate" href="/guides/rotations">
-    Replace selected IPs and poll their status.
-  </Card>
-</CardGroup>
+To send traffic through a proxy, use your proxy username and password with a gateway or assigned Static ISP connection. [Connection formats](/guides/proxy-formats).
