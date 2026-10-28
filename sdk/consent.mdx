@@ -1,26 +1,32 @@
 ---
-title: "Participation flow"
-description: "Present the Double Data notice in your app and keep sharing under the user's control."
+title: "Consent and monetization"
+description: "Build ethical, optional participation with clear benefits and user-controlled sharing."
 ---
 
-Double Data supplies the notice. You control its layout, typography, and native presentation. Use the complete notice returned by the SDK; do not replace its content with a checkbox or an acceptance flag.
+DoubleData supplies the participation notice. You control its layout and explain any benefit offered by your app.
 
-## Ask once per session
+## Ethical participation
 
-1. The user chooses **Enable sharing** in your application.
-2. Your built-in or custom presenter displays the purpose, complete text, operator, contact, and privacy link.
-3. **Enable sharing** records acceptance and permits the session to start. **Decline**, dismissal, or cancellation leaves sharing off.
+Make sharing an informed, voluntary choice. Explain the benefit and resource costs before asking: third-party requests use the person's public IP, bandwidth, battery, and power, and may affect connection performance or incur network charges.
 
-Individual proxy requests need no further prompts. Keep your app's unrelated features available after decline.
+Show the complete DoubleData notice with equally clear **Enable sharing** and **Decline** actions. Dismissal is a decline. Keep unrelated app features available after refusal, and never enable sharing silently or hide withdrawal controls.
 
-## Keep controls available
+## Consent flow
 
-Display sharing status and offer **Pause** and **Withdraw consent**. Set session duration and traffic limits in [configuration](/sdk/configuration). Pause stops traffic; resuming still requires current consent and remaining quota.
+1. The person opens sharing options in your app.
+2. Your built-in or custom presenter shows the purpose, full text, operator, contact, and privacy link.
+3. Explicit acceptance permits a session to start. Decline or cancellation leaves sharing off.
 
-Withdrawal invalidates permission immediately, stops active work, and blocks reconnection. A new session requires another affirmative choice. Close the client when its owner exits, and await cleanup off the UI thread before creating a replacement.
+Requests then run automatically without individual prompts. The SDK records the notice version and content hash with consent; these are receipt metadata, not screen copy.
 
-## Use your own screen
+## Monetization and rewards
 
-Android uses `ConsentPresenter`; desktop uses the C consent callback; Swift uses a cancellable consent prompt. Present the supplied JSON with your app's styling and return acceptance only after the person's explicit action. Cancellation must dismiss the screen and release any waiting callback.
+You can present an optional app benefit alongside participation. State what the person receives, how it is earned, and any limits before they choose. Keep benefit messaging separate from the supplied notice and avoid guaranteed-income claims.
 
-The SDK records the notice version and content hash with consent. These are receipt metadata, not participant-facing copy. [Current notice](/sdk/notices/2026-10-28.1/en.json) · [Privacy](/sdk/privacy).
+Use SDK connection status and traffic counters to show sharing activity. These counters do not calculate earnings or establish a payout balance. Keep reward balances and payment decisions in your backend, using confirmed settlement records and the terms of your integration.
+
+## Pause and withdraw
+
+Keep sharing status, **Pause**, and **Withdraw consent** accessible. Pause stops traffic; resuming requires current consent and remaining quota. Withdrawal invalidates permission immediately, stops active sharing, and blocks reconnection until a new acceptance.
+
+Close the client when its owner exits and await cleanup off the UI thread before replacing it. [Current notice](/sdk/notices/2026-10-28.2/en.json) · [Privacy](/sdk/privacy) · [Configuration](/sdk/configuration).

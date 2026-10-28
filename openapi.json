@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Double Data Proxy API",
+    "title": "DoubleData Proxy API",
     "version": "1.2.0",
     "description": "Manage proxy usage, wallet balance, orders, subscriptions, rotations, and IP authorization. Your API key selects the workspace; do not send an organization ID.",
     "license": {

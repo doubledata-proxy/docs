@@ -1,0 +1,9 @@
+{
+  "version": "2026-10-28.2",
+  "title": "Share your connection",
+  "controller": "DoubleData",
+  "contact": "privacy@proxy.doubledata.com",
+  "purpose": "Route third-party proxy requests through this device's internet connection.",
+  "privacy_url": "https://doubledata.mintlify.app/sdk/privacy",
+  "text": "Sharing is optional. If you enable it, third-party proxy requests use this device's internet connection and public IP address. Requests run automatically while sharing is enabled.\n\nSharing consumes data, battery and power, can affect connection speed and IP reputation, and may incur network charges. DoubleData receives an app-scoped identifier, your connection's public IP, technical session information, traffic counts and a record of your consent.\n\nChoose Decline to continue without sharing. Pause sharing or withdraw consent at any time from the app's sharing controls. Withdrawal stops active sharing and prevents reconnection until you accept again.\n\nEnable sharing only if you are at least 18 and have permission to use this device and connection."
+}

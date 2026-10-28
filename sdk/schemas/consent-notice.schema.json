@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://doubledata.mintlify.app/sdk/schemas/consent-notice.schema.json",
-  "title": "Double Data participation notice",
+  "title": "DoubleData participation notice",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "controller", "contact", "purpose", "privacy_url", "text"],

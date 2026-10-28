@@ -1,6 +1,6 @@
 ---
 title: "Android"
-description: "Install the AAR, use the Double Data dialog, or render the supplied notice in your own UI."
+description: "Install the AAR, use the DoubleData dialog, or render the supplied notice in your own UI."
 ---
 
 ## Install
@@ -17,7 +17,7 @@ Supports Android API 23+ and ARMv7, ARM64, x86, and x86_64.
 
 ## Create a client
 
-The SDK includes the Double Data notice. Set only your app's connection settings and optional limits:
+The SDK includes the DoubleData notice. Set only your app's connection settings and optional limits:
 
 ```java
 String configJSON = new JSONObject()
@@ -64,4 +64,4 @@ Here `sharingScreen` is your native UI bridge. The SDK calls it on a worker: pos
 
 Call `closeAsync()` when the sharing screen leaves the foreground. Await its result off the UI thread before replacing the client.
 
-[Complete Activity](https://github.com/doubledata-proxy/docs/releases/download/sdk-v1.0.0/MainActivity.java) · [Application JSON](/sdk/examples/application-sdk.json) · [Participation flow](/sdk/consent).
+[Complete Activity](https://github.com/doubledata-proxy/docs/releases/download/sdk-v1.0.1/MainActivity.java) · [Application JSON](/sdk/examples/application-sdk.json) · [Participation flow](/sdk/consent).
