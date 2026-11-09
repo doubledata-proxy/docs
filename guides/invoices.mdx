@@ -1,0 +1,45 @@
+---
+title: "Download invoices"
+description: "List your organization's invoices and download them as PDF files."
+---
+
+Use the invoice endpoints to collect invoices for bookkeeping, or to check whether anything is still unpaid.
+
+## List invoices
+
+```bash
+curl 'https://app.proxy.doubledata.com/api/v1/invoices?limit=25' \
+  -H "Authorization: Bearer $DOUBLEDATA_API_KEY"
+```
+
+Invoices are returned newest first. Each invoice includes its number, `status` (`open`, `paid`, `void`, or `uncollectible`), totals in integer cents, and a `hosted_invoice_url` where it can be viewed and paid.
+
+- Add `status=open` to see what is still due.
+- When `has_more` is `true`, pass `next_cursor` as `starting_after` to get the next page.
+- `limit` accepts 1–100 and defaults to 25.
+
+## Download a PDF
+
+```bash
+curl -OJ https://app.proxy.doubledata.com/api/v1/invoices/in_1QxY2zAbCdEfGh/pdf \
+  -H "Authorization: Bearer $DOUBLEDATA_API_KEY"
+```
+
+The response is `application/pdf`. `Content-Disposition` names the file after the invoice number, and `-OJ` saves it under that name. If `pdf_available` is `false`, the request returns `409 not_available`. Retry later or use `hosted_invoice_url`.
+
+## Download every invoice
+
+```bash
+cursor=""
+while :; do
+  page=$(curl -s "https://app.proxy.doubledata.com/api/v1/invoices?limit=100${cursor:+&starting_after=$cursor}" \
+    -H "Authorization: Bearer $DOUBLEDATA_API_KEY")
+  for id in $(echo "$page" | jq -r '.invoices[] | select(.pdf_available) | .id'); do
+    curl -sOJ "https://app.proxy.doubledata.com/api/v1/invoices/$id/pdf" -H "Authorization: Bearer $DOUBLEDATA_API_KEY"
+  done
+  [ "$(echo "$page" | jq -r .has_more)" = "true" ] || break
+  cursor=$(echo "$page" | jq -r .next_cursor)
+done
+```
+
+Invoice PDF requests count toward the read rate limit. See [rate limits](/errors#rate-limits).

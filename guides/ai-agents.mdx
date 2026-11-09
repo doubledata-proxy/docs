@@ -1,0 +1,106 @@
+---
+title: "AI agents and MCP"
+description: "Connect Claude, Cursor, Codex, VS Code, and other agents to your DoubleData account and proxy network."
+---
+
+The open-source [DoubleData MCP server](https://github.com/doubledata-proxy/doubledata-mcp) lets an AI agent manage your account and use the proxy network for you. Ask in plain language:
+
+- "How much traffic did we use this month, and what is my balance?"
+- "Create a residential credential for the scraper and cap it at 50 GB a month."
+- "Open this page from a German residential IP and summarize the prices."
+- "Give me 500 US sticky proxies for Playwright as a file."
+- "Download all invoices since January for my accountant."
+
+Reports, invoice PDFs, and proxy lists are saved as files in a local export directory.
+
+## 1. Connect your API key
+
+Run this in your terminal:
+
+```bash
+npx -y github:doubledata-proxy/doubledata-mcp login
+```
+
+It opens **Dashboard › Team**, where an organization admin creates an API key. Paste the key at the hidden prompt. The command verifies the key and saves it to `~/.config/doubledata/credentials.json`, readable only by you. You can set `DOUBLEDATA_API_KEY` instead.
+
+<Warning>
+  The agent acts with your organization's API key. It can create credentials, use traffic, and buy Static ISP proxies. Set `DOUBLEDATA_READ_ONLY=true` if the agent should only read.
+</Warning>
+
+## 2. Add the server to your agent
+
+The server needs Node.js 20.18 or later.
+
+<Tabs>
+  <Tab title="Claude Code">
+    Install the plugin. It includes the MCP server and agent skills.
+
+    ```bash
+    claude plugin marketplace add doubledata-proxy/doubledata-mcp
+    ```
+
+    ```bash
+    claude plugin install doubledata@doubledata
+    ```
+
+    To install only the server, run `claude mcp add doubledata -- npx -y github:doubledata-proxy/doubledata-mcp`.
+  </Tab>
+  <Tab title="Codex">
+    ```bash
+    codex mcp add doubledata -- npx -y github:doubledata-proxy/doubledata-mcp
+    ```
+  </Tab>
+  <Tab title="Cursor and Claude Desktop">
+    Add this to `~/.cursor/mcp.json` or `claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "doubledata": {
+          "command": "npx",
+          "args": ["-y", "github:doubledata-proxy/doubledata-mcp"]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="VS Code">
+    Add this to `.vscode/mcp.json`:
+
+    ```json
+    {
+      "servers": {
+        "doubledata": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "github:doubledata-proxy/doubledata-mcp"]
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## What the agent can do
+
+| Area | Tools |
+| --- | --- |
+| Account | Overview, balance, usage, and usage export as CSV or JSON |
+| Credentials | List, read, create, and delete credentials; read and set traffic limits |
+| Proxy network | Fetch URLs with country, city, and session targeting; check the exit IP; build connection snippets; export proxy lists |
+| Invoices | List invoices, download one PDF, or download all PDFs with a CSV index |
+| Static ISP | Catalog, quotes, orders, subscriptions, proxy lists, rotations, and IP authorization |
+
+## Safety controls
+
+| Variable | Effect |
+| --- | --- |
+| `DOUBLEDATA_READ_ONLY=true` | Hides every tool that spends money or traffic or changes the account. |
+| `DOUBLEDATA_TOOLSETS=account,invoices` | Exposes only the listed tool groups: `account`, `credentials`, `proxy`, `invoices`, and `isp`. |
+| `DOUBLEDATA_OUTPUT_DIR` | Sets where files are saved. The server refuses to write outside it. |
+
+Orders need explicit confirmation, and so do deletions and renewal cancellations. Passwords are masked unless you ask for them. Fetched pages are marked as untrusted content so the agent does not follow instructions embedded in websites. For larger jobs, give the agent its own credential with a [traffic limit](/guides/credentials#limit-traffic).
+
+## Without MCP
+
+Agents that only run shell commands can call the [REST API](/api-reference/introduction) directly with `curl`. The repository's `skills/` folder includes agent skills for the API and for proxy targeting.
