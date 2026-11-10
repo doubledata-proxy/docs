@@ -1599,8 +1599,10 @@
                     "type": "string",
                     "enum": [
                       "eu",
-                      "us"
-                    ]
+                      "us",
+                      "default"
+                    ],
+                    "description": "eu and us on the public service; default for a single-gateway deployment."
                   },
                   "host": {
                     "type": "string"
@@ -1622,15 +1624,19 @@
               "properties": {
                 "http": {
                   "type": "integer",
-                  "const": 7777
+                  "example": 7777
                 },
                 "https": {
-                  "type": "integer",
-                  "const": 9999
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "example": 9999,
+                  "description": "Null when the deployment does not serve HTTPS proxy connections."
                 },
                 "socks5": {
                   "type": "integer",
-                  "const": 8888
+                  "example": 8888
                 }
               }
             }
