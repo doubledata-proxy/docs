@@ -37,7 +37,8 @@
         "pages": [
           "index",
           "quickstart",
-          "authentication"
+          "authentication",
+          "guides/ai-agents"
         ]
       },
       {
@@ -51,6 +52,8 @@
         "group": "Workflows",
         "pages": [
           "guides/usage",
+          "guides/credentials",
+          "guides/invoices",
           "guides/ordering",
           "guides/rotations",
           "guides/ip-authorization",
@@ -67,6 +70,25 @@
             "pages": [
               "api-reference/usage",
               "GET /balance"
+            ]
+          },
+          {
+            "group": "Credentials",
+            "pages": [
+              "GET /proxies",
+              "POST /proxies",
+              "GET /proxies/{username}",
+              "DELETE /proxies/{username}",
+              "GET /proxies/{username}/limits",
+              "PUT /proxies/{username}/limits"
+            ]
+          },
+          {
+            "group": "Invoices",
+            "pages": [
+              "GET /invoices",
+              "GET /invoices/{invoiceId}",
+              "GET /invoices/{invoiceId}/pdf"
             ]
           },
           {

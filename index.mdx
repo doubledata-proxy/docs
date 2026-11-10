@@ -3,7 +3,7 @@ title: "DoubleData Proxy Docs"
 description: "Connect to DoubleData proxies, manage your account through the API, and embed the Proxy SDK."
 ---
 
-Connect to Residential, Datacenter, Mobile, and ISP proxies. Use the API to monitor usage, check your balance, and manage Static ISP subscriptions. Embed the Proxy SDK in your own application with built-in consent controls.
+Connect to Residential, Datacenter, Mobile, and ISP proxies. Use the API to monitor usage, check your balance, manage proxy credentials, download invoices, and manage Static ISP subscriptions. Embed the Proxy SDK in your own application with built-in consent controls.
 
 <Info>
   The API base URL is `https://app.proxy.doubledata.com/api/v1`. Every request uses your organization's API key as a bearer token.
@@ -25,6 +25,12 @@ Connect to Residential, Datacenter, Mobile, and ISP proxies. Use the API to moni
   <Card title="Explore the API" icon="code" href="/api-reference/introduction">
     Send requests from the interactive production playground.
   </Card>
+  <Card title="Connect an AI agent" icon="robot" href="/guides/ai-agents">
+    Let Claude, Cursor, or Codex manage your account and fetch pages through the proxy network.
+  </Card>
+  <Card title="Download invoices" icon="file-invoice" href="/guides/invoices">
+    List invoices and download PDFs for bookkeeping.
+  </Card>
   <Card title="Embed the Proxy SDK" icon="code-branch" href="/sdk/overview">
     Add consent-based bandwidth sharing to your application.
   </Card>
@@ -35,6 +41,8 @@ Connect to Residential, Datacenter, Mobile, and ISP proxies. Use the API to moni
 - Check workspace-wide or per-credential usage over a UTC date range.
 - List active subscriptions with remaining rotation units and reset times.
 - Read the USD balance funded through the DoubleData website.
+- Create, limit, and delete Residential, Datacenter, and Mobile proxy credentials.
+- List invoices and download them as PDF files.
 - Browse shared, private, and dedicated availability by country.
 - Quote and order recurring Static ISP packages with server-authoritative pricing.
 - Cancel renewal while retaining access through the paid period.

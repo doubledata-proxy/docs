@@ -48,6 +48,12 @@
     {
       "name": "IP authorization",
       "description": "The source IP authorized for a subscription."
+    },
+    { "name": "Credentials",
+      "description": "Residential, datacenter, and mobile proxy credentials and their traffic limits."
+    },
+    { "name": "Invoices",
+      "description": "Organization invoices and invoice PDF downloads."
     }
   ],
   "paths": {
@@ -139,6 +145,723 @@
         }
       }
     },
+      "/proxies": {
+        "get": {
+          "operationId": "listProxyCredentials",
+          "summary": "List proxy credentials",
+          "description": "List residential, datacenter, and mobile credentials in your organization. Passwords are not included; get one credential to read its password.",
+          "tags": [
+            "Credentials"
+          ],
+          "responses": {
+            "200": {
+              "description": "Credentials",
+              "headers": {
+                "X-Request-ID": {
+                  "$ref": "#/components/headers/RequestID"
+                },
+                "Cache-Control": {
+                  "$ref": "#/components/headers/CacheControl"
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CredentialsResponse"
+                  },
+                  "examples": {
+                    "example": {
+                      "value": {
+                        "credentials": [
+                          {
+                            "id": "8b0d3c1e-52f4-4a8e-9d1a-6f2b7c9e0a14",
+                            "username": "resi_3f9a1c2b7d4e8f60",
+                            "display_name": "Price monitor",
+                            "proxy_type": "residential",
+                            "enabled": true,
+                            "funding_source": "workspace_balance",
+                            "traffic_used_mb": 1834.5,
+                            "limits_mb": {
+                              "total": 0,
+                              "daily": 0,
+                              "weekly": 0,
+                              "monthly": 50000
+                            },
+                            "created_at": "2026-11-02T09:14:00Z"
+                          }
+                        ],
+                        "total": 1
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "$ref": "#/components/responses/InternalError"
+            },
+            "503": {
+              "$ref": "#/components/responses/ServiceUnavailable"
+            }
+          }
+        },
+        "post": {
+          "operationId": "createProxyCredential",
+          "summary": "Create proxy credential",
+          "description": "Create a credential for residential, datacenter, or mobile traffic. Your organization needs a GB package for that product or a positive balance.",
+          "tags": [
+            "Credentials"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCredentialRequest"
+                },
+                "examples": {
+                  "residential": {
+                    "value": {
+                      "name": "Price monitor",
+                      "proxy_type": "residential"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Created credential with its password",
+              "headers": {
+                "X-Request-ID": {
+                  "$ref": "#/components/headers/RequestID"
+                },
+                "Cache-Control": {
+                  "$ref": "#/components/headers/CacheControl"
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CredentialSecret"
+                  },
+                  "examples": {
+                    "example": {
+                      "value": {
+                        "id": "8b0d3c1e-52f4-4a8e-9d1a-6f2b7c9e0a14",
+                        "username": "resi_3f9a1c2b7d4e8f60",
+                        "display_name": "Price monitor",
+                        "proxy_type": "residential",
+                        "enabled": true,
+                        "funding_source": "workspace_balance",
+                        "traffic_used_mb": 1834.5,
+                        "limits_mb": {
+                          "total": 0,
+                          "daily": 0,
+                          "weekly": 0,
+                          "monthly": 50000
+                        },
+                        "created_at": "2026-11-02T09:14:00Z",
+                        "password": "<proxy password>",
+                        "connection": {
+                          "gateways": [
+                            {
+                              "region": "eu",
+                              "host": "proxy.doubledata.com",
+                              "default": true
+                            },
+                            {
+                              "region": "us",
+                              "host": "us.proxy.doubledata.com",
+                              "default": false
+                            }
+                          ],
+                          "ports": {
+                            "http": 7777,
+                            "https": 9999,
+                            "socks5": 8888
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequest"
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "402": {
+              "$ref": "#/components/responses/PaymentRequired"
+            },
+            "403": {
+              "$ref": "#/components/responses/Forbidden"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "$ref": "#/components/responses/InternalError"
+            },
+            "503": {
+              "$ref": "#/components/responses/ServiceUnavailable"
+            }
+          }
+        }
+      },
+      "/proxies/{username}": {
+        "get": {
+          "operationId": "getProxyCredential",
+          "summary": "Get proxy credential",
+          "description": "Return one credential with its password and gateway details.",
+          "tags": [
+            "Credentials"
+          ],
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Username"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Credential with its password",
+              "headers": {
+                "X-Request-ID": {
+                  "$ref": "#/components/headers/RequestID"
+                },
+                "Cache-Control": {
+                  "$ref": "#/components/headers/CacheControl"
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CredentialSecret"
+                  },
+                  "examples": {
+                    "example": {
+                      "value": {
+                        "id": "8b0d3c1e-52f4-4a8e-9d1a-6f2b7c9e0a14",
+                        "username": "resi_3f9a1c2b7d4e8f60",
+                        "display_name": "Price monitor",
+                        "proxy_type": "residential",
+                        "enabled": true,
+                        "funding_source": "workspace_balance",
+                        "traffic_used_mb": 1834.5,
+                        "limits_mb": {
+                          "total": 0,
+                          "daily": 0,
+                          "weekly": 0,
+                          "monthly": 50000
+                        },
+                        "created_at": "2026-11-02T09:14:00Z",
+                        "password": "<proxy password>",
+                        "connection": {
+                          "gateways": [
+                            {
+                              "region": "eu",
+                              "host": "proxy.doubledata.com",
+                              "default": true
+                            },
+                            {
+                              "region": "us",
+                              "host": "us.proxy.doubledata.com",
+                              "default": false
+                            }
+                          ],
+                          "ports": {
+                            "http": 7777,
+                            "https": 9999,
+                            "socks5": 8888
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequest"
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "$ref": "#/components/responses/InternalError"
+            },
+            "503": {
+              "$ref": "#/components/responses/ServiceUnavailable"
+            }
+          }
+        },
+        "delete": {
+          "operationId": "deleteProxyCredential",
+          "summary": "Delete proxy credential",
+          "description": "Permanently delete a credential. Connections that use it stop working.",
+          "tags": [
+            "Credentials"
+          ],
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Username"
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Credential deleted",
+              "headers": {
+                "X-Request-ID": {
+                  "$ref": "#/components/headers/RequestID"
+                },
+                "Cache-Control": {
+                  "$ref": "#/components/headers/CacheControl"
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequest"
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "$ref": "#/components/responses/InternalError"
+            },
+            "503": {
+              "$ref": "#/components/responses/ServiceUnavailable"
+            }
+          }
+        }
+      },
+      "/proxies/{username}/limits": {
+        "get": {
+          "operationId": "getProxyTrafficLimits",
+          "summary": "Get traffic limits",
+          "description": "Return a credential's total, daily, weekly, and monthly limits in MB with current consumption and reset times. Periods reset in UTC.",
+          "tags": [
+            "Credentials"
+          ],
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Username"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Traffic limits and consumption",
+              "headers": {
+                "X-Request-ID": {
+                  "$ref": "#/components/headers/RequestID"
+                },
+                "Cache-Control": {
+                  "$ref": "#/components/headers/CacheControl"
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/TrafficLimits"
+                  },
+                  "examples": {
+                    "example": {
+                      "value": {
+                        "username": "resi_3f9a1c2b7d4e8f60",
+                        "funding_source": "workspace_balance",
+                        "traffic_limit_mb": 0,
+                        "traffic_limit_used_mb": 0,
+                        "traffic_used_mb": 1834.5,
+                        "daily_limit_mb": 0,
+                        "weekly_limit_mb": 0,
+                        "monthly_limit_mb": 50000,
+                        "traffic_limits_timezone": "UTC",
+                        "daily_used_mb": 120.2,
+                        "weekly_used_mb": 640.8,
+                        "monthly_used_mb": 1834.5,
+                        "daily_resets_at": "2026-11-10T00:00:00Z",
+                        "weekly_resets_at": "2026-11-16T00:00:00Z",
+                        "monthly_resets_at": "2026-12-01T00:00:00Z"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequest"
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "$ref": "#/components/responses/InternalError"
+            },
+            "503": {
+              "$ref": "#/components/responses/ServiceUnavailable"
+            }
+          }
+        },
+        "put": {
+          "operationId": "setProxyTrafficLimits",
+          "summary": "Set traffic limits",
+          "description": "Change one or more limits. Omitted limits keep their value; `0` removes a limit.",
+          "tags": [
+            "Credentials"
+          ],
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/Username"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrafficLimitsRequest"
+                },
+                "examples": {
+                  "monthly": {
+                    "value": {
+                      "monthly_limit_mb": 50000
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Updated traffic limits",
+              "headers": {
+                "X-Request-ID": {
+                  "$ref": "#/components/headers/RequestID"
+                },
+                "Cache-Control": {
+                  "$ref": "#/components/headers/CacheControl"
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/TrafficLimits"
+                  },
+                  "examples": {
+                    "example": {
+                      "value": {
+                        "username": "resi_3f9a1c2b7d4e8f60",
+                        "funding_source": "workspace_balance",
+                        "traffic_limit_mb": 0,
+                        "traffic_limit_used_mb": 0,
+                        "traffic_used_mb": 1834.5,
+                        "daily_limit_mb": 0,
+                        "weekly_limit_mb": 0,
+                        "monthly_limit_mb": 50000,
+                        "traffic_limits_timezone": "UTC",
+                        "daily_used_mb": 120.2,
+                        "weekly_used_mb": 640.8,
+                        "monthly_used_mb": 1834.5,
+                        "daily_resets_at": "2026-11-10T00:00:00Z",
+                        "weekly_resets_at": "2026-11-16T00:00:00Z",
+                        "monthly_resets_at": "2026-12-01T00:00:00Z"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequest"
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "$ref": "#/components/responses/InternalError"
+            },
+            "503": {
+              "$ref": "#/components/responses/ServiceUnavailable"
+            }
+          }
+        }
+      },
+      "/invoices": {
+        "get": {
+          "operationId": "listInvoices",
+          "summary": "List invoices",
+          "description": "List your organization's invoices, newest first. Draft invoices are not included.",
+          "tags": [
+            "Invoices"
+          ],
+          "parameters": [
+            {
+              "name": "limit",
+              "in": "query",
+              "required": false,
+              "description": "Page size.",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 25
+              }
+            },
+            {
+              "name": "starting_after",
+              "in": "query",
+              "required": false,
+              "description": "Return invoices after this invoice ID. Use `next_cursor` from the previous page.",
+              "schema": {
+                "type": "string",
+                "pattern": "^in_[A-Za-z0-9]+$"
+              }
+            },
+            {
+              "name": "status",
+              "in": "query",
+              "required": false,
+              "description": "Only return invoices with this status.",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "paid",
+                  "void",
+                  "uncollectible"
+                ]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "A page of invoices",
+              "headers": {
+                "X-Request-ID": {
+                  "$ref": "#/components/headers/RequestID"
+                },
+                "Cache-Control": {
+                  "$ref": "#/components/headers/CacheControl"
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/InvoicesResponse"
+                  },
+                  "examples": {
+                    "example": {
+                      "value": {
+                        "invoices": [
+                          {
+                            "id": "in_1QxY2zAbCdEfGh",
+                            "number": "DD-2026-0042",
+                            "status": "paid",
+                            "description": "Residential traffic",
+                            "currency": "usd",
+                            "total_cents": 5000,
+                            "amount_paid_cents": 5000,
+                            "amount_due_cents": 0,
+                            "created_at": "2026-11-01T10:00:00Z",
+                            "paid_at": "2026-11-01T10:00:05Z",
+                            "hosted_invoice_url": "https://invoice.stripe.com/i/acct_example/live_example",
+                            "pdf_available": true
+                          }
+                        ],
+                        "has_more": false,
+                        "next_cursor": null
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequest"
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "$ref": "#/components/responses/InternalError"
+            },
+            "503": {
+              "$ref": "#/components/responses/ServiceUnavailable"
+            }
+          }
+        }
+      },
+      "/invoices/{invoiceId}": {
+        "get": {
+          "operationId": "getInvoice",
+          "summary": "Get invoice",
+          "description": "Return one invoice.",
+          "tags": [
+            "Invoices"
+          ],
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/InvoiceID"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Invoice",
+              "headers": {
+                "X-Request-ID": {
+                  "$ref": "#/components/headers/RequestID"
+                },
+                "Cache-Control": {
+                  "$ref": "#/components/headers/CacheControl"
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Invoice"
+                  },
+                  "examples": {
+                    "example": {
+                      "value": {
+                        "id": "in_1QxY2zAbCdEfGh",
+                        "number": "DD-2026-0042",
+                        "status": "paid",
+                        "description": "Residential traffic",
+                        "currency": "usd",
+                        "total_cents": 5000,
+                        "amount_paid_cents": 5000,
+                        "amount_due_cents": 0,
+                        "created_at": "2026-11-01T10:00:00Z",
+                        "paid_at": "2026-11-01T10:00:05Z",
+                        "hosted_invoice_url": "https://invoice.stripe.com/i/acct_example/live_example",
+                        "pdf_available": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequest"
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "$ref": "#/components/responses/InternalError"
+            },
+            "503": {
+              "$ref": "#/components/responses/ServiceUnavailable"
+            }
+          }
+        }
+      },
+      "/invoices/{invoiceId}/pdf": {
+        "get": {
+          "operationId": "downloadInvoicePDF",
+          "summary": "Download invoice PDF",
+          "description": "Download the invoice as a PDF file. Returns `409` with `not_available` when the PDF is not ready yet.",
+          "tags": [
+            "Invoices"
+          ],
+          "parameters": [
+            {
+              "$ref": "#/components/parameters/InvoiceID"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Invoice PDF",
+              "headers": {
+                "X-Request-ID": {
+                  "$ref": "#/components/headers/RequestID"
+                },
+                "Cache-Control": {
+                  "$ref": "#/components/headers/CacheControl"
+                },
+                "Content-Disposition": {
+                  "description": "Attachment filename, based on the invoice number.",
+                  "schema": {
+                    "type": "string",
+                    "example": "attachment; filename=\"DD-2026-0042.pdf\""
+                  }
+                }
+              },
+              "content": {
+                "application/pdf": {
+                  "schema": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequest"
+            },
+            "401": {
+              "$ref": "#/components/responses/Unauthorized"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFound"
+            },
+            "409": {
+              "$ref": "#/components/responses/Conflict"
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "$ref": "#/components/responses/InternalError"
+            },
+            "503": {
+              "$ref": "#/components/responses/ServiceUnavailable"
+            }
+          }
+        }
+      },
     "/isp/catalog": {
       "get": {
         "operationId": "getISPCatalog",
@@ -673,6 +1396,28 @@
       }
     },
     "parameters": {
+        "Username": {
+          "name": "username",
+          "in": "path",
+          "required": true,
+          "description": "Base proxy username, without targeting or session suffixes.",
+          "schema": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+          },
+          "example": "resi_3f9a1c2b7d4e8f60"
+        },
+        "InvoiceID": {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "description": "The invoice ID from the invoice list.",
+          "schema": {
+            "type": "string",
+            "pattern": "^in_[A-Za-z0-9]+$"
+          },
+          "example": "in_1QxY2zAbCdEfGh"
+        },
       "SubscriptionID": {
         "name": "subscriptionId",
         "in": "path",
@@ -743,6 +1488,445 @@
       }
     },
     "schemas": {
+        "Credential": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "username",
+            "display_name",
+            "proxy_type",
+            "enabled",
+            "funding_source",
+            "traffic_used_mb",
+            "limits_mb",
+            "created_at"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "username": {
+              "type": "string",
+              "description": "Base proxy username. Append targeting parameters when you connect."
+            },
+            "display_name": {
+              "type": "string"
+            },
+            "proxy_type": {
+              "type": "string",
+              "enum": [
+                "residential",
+                "datacenter",
+                "mobile"
+              ]
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "funding_source": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "package_bytes",
+                "workspace_balance",
+                null
+              ],
+              "description": "What pays for traffic: a GB package or the organization balance."
+            },
+            "traffic_used_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "limits_mb": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "total",
+                "daily",
+                "weekly",
+                "monthly"
+              ],
+              "description": "Traffic limits in MB. `0` means no limit.",
+              "properties": {
+                "total": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "daily": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "weekly": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "monthly": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "ProxyConnection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "gateways",
+            "ports"
+          ],
+          "properties": {
+            "gateways": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "region",
+                  "host",
+                  "default"
+                ],
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "eu",
+                      "us",
+                      "default"
+                    ],
+                    "description": "eu and us on the public service; default for a single-gateway deployment."
+                  },
+                  "host": {
+                    "type": "string"
+                  },
+                  "default": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "ports": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "http",
+                "https",
+                "socks5"
+              ],
+              "properties": {
+                "http": {
+                  "type": "integer",
+                  "example": 7777
+                },
+                "https": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "example": 9999,
+                  "description": "Null when the deployment does not serve HTTPS proxy connections."
+                },
+                "socks5": {
+                  "type": "integer",
+                  "example": 8888
+                }
+              }
+            }
+          }
+        },
+        "CredentialSecret": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/Credential"
+            },
+            {
+              "type": "object",
+              "required": [
+                "password",
+                "connection"
+              ],
+              "properties": {
+                "password": {
+                  "type": "string",
+                  "description": "Proxy password. Treat it as a secret."
+                },
+                "connection": {
+                  "$ref": "#/components/schemas/ProxyConnection"
+                }
+              }
+            }
+          ]
+        },
+        "CredentialsResponse": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "credentials",
+            "total"
+          ],
+          "properties": {
+            "credentials": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Credential"
+              }
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "CreateCredentialRequest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 24,
+              "description": "Display name shown in the dashboard."
+            },
+            "proxy_type": {
+              "type": "string",
+              "enum": [
+                "residential",
+                "datacenter",
+                "mobile"
+              ],
+              "default": "residential"
+            }
+          }
+        },
+        "TrafficLimitsRequest": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "traffic_limit_mb": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "MB. Use `0` to remove the limit."
+            },
+            "daily_limit_mb": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "MB. Use `0` to remove the limit."
+            },
+            "weekly_limit_mb": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "MB. Use `0` to remove the limit."
+            },
+            "monthly_limit_mb": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "MB. Use `0` to remove the limit."
+            }
+          }
+        },
+        "TrafficLimits": {
+          "type": "object",
+          "required": [
+            "username",
+            "funding_source",
+            "traffic_limit_mb",
+            "traffic_limit_used_mb",
+            "traffic_used_mb",
+            "daily_limit_mb",
+            "weekly_limit_mb",
+            "monthly_limit_mb",
+            "traffic_limits_timezone",
+            "daily_used_mb",
+            "weekly_used_mb",
+            "monthly_used_mb",
+            "daily_resets_at",
+            "weekly_resets_at",
+            "monthly_resets_at"
+          ],
+          "properties": {
+            "username": {
+              "type": "string"
+            },
+            "funding_source": {
+              "type": "string",
+              "enum": [
+                "package_bytes",
+                "workspace_balance"
+              ]
+            },
+            "traffic_limit_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "traffic_limit_used_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "traffic_used_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "daily_limit_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "weekly_limit_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "monthly_limit_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "daily_used_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "weekly_used_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "monthly_used_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "traffic_limits_timezone": {
+              "type": "string",
+              "const": "UTC"
+            },
+            "daily_resets_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "weekly_resets_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "monthly_resets_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "Invoice": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "number",
+            "status",
+            "description",
+            "currency",
+            "total_cents",
+            "amount_paid_cents",
+            "amount_due_cents",
+            "created_at",
+            "paid_at",
+            "hosted_invoice_url",
+            "pdf_available"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "number": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "open",
+                "paid",
+                "void",
+                "uncollectible"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "currency": {
+              "type": "string",
+              "example": "usd"
+            },
+            "total_cents": {
+              "type": "integer"
+            },
+            "amount_paid_cents": {
+              "type": "integer"
+            },
+            "amount_due_cents": {
+              "type": "integer"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "paid_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            },
+            "hosted_invoice_url": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri",
+              "description": "Page where the invoice can be viewed and paid."
+            },
+            "pdf_available": {
+              "type": "boolean",
+              "description": "Whether `GET /invoices/{invoiceId}/pdf` can return a PDF."
+            }
+          }
+        },
+        "InvoicesResponse": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "invoices",
+            "has_more",
+            "next_cursor"
+          ],
+          "properties": {
+            "invoices": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Invoice"
+              }
+            },
+            "has_more": {
+              "type": "boolean"
+            },
+            "next_cursor": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Pass as `starting_after` to get the next page."
+            }
+          }
+        },
       "UsageTotals": {
         "type": "object",
         "description": "Wallet charges exclude package purchases, package-funded traffic, subscription fees, top-ups, manual adjustments, and positive ledger entries.",
@@ -1295,7 +2479,9 @@
               "rotation_allowance_exhausted",
               "rotation_in_progress",
               "unauthorized",
+              "forbidden",
               "not_found",
+              "not_available",
               "rate_limit_exceeded",
               "temporarily_unavailable",
               "internal_error"
