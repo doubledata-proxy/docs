@@ -69,7 +69,16 @@
             "group": "All proxies",
             "pages": [
               "api-reference/usage",
-              "GET /balance"
+              "GET /balance",
+              "GET /payment-methods",
+              "POST /balance/top-ups"
+            ]
+          },
+          {
+            "group": "Traffic packages",
+            "pages": [
+              "GET /traffic/products",
+              "POST /traffic/orders"
             ]
           },
           {
