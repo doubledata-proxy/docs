@@ -1462,7 +1462,7 @@
             "name": "X-Request-ID",
             "in": "header",
             "required": false,
-            "description": "A UUID you choose for this purchase. Repeating a request with the same ID returns the first result instead of charging again, so retry with it after a timeout or a 5xx response. A retry must repeat the same body; a top-up retry uses the card of the first attempt. Without it, every request is a new purchase.",
+            "description": "A UUID you choose for this purchase. Repeating a request with the same ID returns the first result instead of charging again, so retry with it after a timeout or a 5xx response. A retry must repeat the same body. Without it, every request is a new purchase.",
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -1626,7 +1626,7 @@
             "name": "X-Request-ID",
             "in": "header",
             "required": false,
-            "description": "A UUID you choose for this purchase. Repeating a request with the same ID returns the first result instead of charging again, so retry with it after a timeout or a 5xx response. A retry must repeat the same body; a top-up retry uses the card of the first attempt. Without it, every request is a new purchase.",
+            "description": "A UUID you choose for this purchase. Repeating a request with the same ID returns the first result instead of charging again, so retry with it after a timeout or a 5xx response. A retry must repeat the same body. Without it, every request is a new purchase.",
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -1672,7 +1672,6 @@
                       "top_up": {
                         "amount_cents": 5000,
                         "currency": "usd",
-                        "payment_method_id": "0b7c9a52-77e2-4f3c-9a59-28f04a2f8f11",
                         "receipt_url": "https://pay.stripe.com/receipts/example"
                       },
                       "balance_cents": 17500
@@ -3067,7 +3066,6 @@
             "required": [
               "amount_cents",
               "currency",
-              "payment_method_id",
               "receipt_url"
             ],
             "properties": {
@@ -3079,10 +3077,6 @@
                 "enum": [
                   "usd"
                 ]
-              },
-              "payment_method_id": {
-                "type": "string",
-                "format": "uuid"
               },
               "receipt_url": {
                 "type": [
