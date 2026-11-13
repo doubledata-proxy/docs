@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "DoubleData Proxy API",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Manage proxy usage, wallet balance, orders, subscriptions, rotations, and IP authorization. Your API key selects the workspace; do not send an organization ID.",
     "license": {
       "name": "Proprietary",
@@ -28,6 +28,10 @@
     {
       "name": "Balance",
       "description": "The organization USD balance shared with the DoubleData website."
+    },
+    {
+      "name": "Traffic",
+      "description": "Traffic packages bought from the organization balance."
     },
     {
       "name": "Catalog",
@@ -120,7 +124,7 @@
       "get": {
         "operationId": "getOrganizationBalance",
         "summary": "Get organization balance",
-        "description": "Check your USD balance, shared with the dashboard. Add funds on the website; the API has no funding endpoint.",
+        "description": "Check your USD balance, shared with the dashboard. Add funds with `POST /balance/top-ups` or on the website.",
         "tags": ["Balance"],
         "responses": {
           "200": {
@@ -1384,6 +1388,322 @@
           "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
+    },
+    "/traffic/products": {
+      "get": {
+        "operationId": "listTrafficProducts",
+        "summary": "List traffic packages",
+        "description": "List the traffic packages you can buy from your balance, with prices.",
+        "tags": [
+          "Traffic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Active traffic packages",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrafficProductsResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "products": [
+                        {
+                          "id": "7a3f2a4e-1c2b-4d5e-8f90-a1b2c3d4e5f6",
+                          "proxy_type": "residential",
+                          "name": "10 GB",
+                          "description": "Residential traffic",
+                          "amount_gb": 10,
+                          "price_per_gb_cents": 300,
+                          "total_cents": 3000,
+                          "requires_verification": false
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/traffic/orders": {
+      "post": {
+        "operationId": "createTrafficOrder",
+        "summary": "Buy a traffic package",
+        "description": "Buy a traffic package from your organization balance. Packages over $1,000 need a verified organization. To pay by card, add funds first with `POST /balance/top-ups`.",
+        "tags": [
+          "Traffic"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-ID",
+            "in": "header",
+            "required": false,
+            "description": "A UUID you choose for this purchase. Repeating a request with the same ID returns the first result instead of charging again, so retry with it after a timeout or a 5xx response. A retry must repeat the same body. Without it, every request is a new purchase.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTrafficOrderRequest"
+              },
+              "examples": {
+                "buy": {
+                  "value": {
+                    "product_id": "7a3f2a4e-1c2b-4d5e-8f90-a1b2c3d4e5f6"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Balance charged and traffic added",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrafficOrderResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "order": {
+                        "id": "c0ffee00-0000-4000-8000-000000000001",
+                        "product_id": "7a3f2a4e-1c2b-4d5e-8f90-a1b2c3d4e5f6",
+                        "proxy_type": "residential",
+                        "amount_gb": 10,
+                        "price_per_gb_cents": 300,
+                        "total_cents": 3000,
+                        "payment_source": "balance"
+                      },
+                      "traffic_balance": {
+                        "proxy_type": "residential",
+                        "remaining_bytes": 12500000000
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/payment-methods": {
+      "get": {
+        "operationId": "listPaymentMethods",
+        "summary": "List saved payment methods",
+        "description": "List the cards saved on the website. Use an `id` to choose the card for a top-up.",
+        "tags": [
+          "Balance"
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved payment methods",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentMethodsResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "payment_methods": [
+                        {
+                          "id": "0b7c9a52-77e2-4f3c-9a59-28f04a2f8f11",
+                          "type": "card",
+                          "brand": "visa",
+                          "last4": "4242",
+                          "exp_month": 12,
+                          "exp_year": 2030,
+                          "is_default": true
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/balance/top-ups": {
+      "post": {
+        "operationId": "createBalanceTopUp",
+        "summary": "Add funds from a saved card",
+        "description": "Charge a saved card and add the amount to your organization balance. Uses the default card unless you pass `payment_method_id`. Each request charges $10 to $1,000, and API keys can charge at most $1,000 per organization in 24 hours. Cards that need authentication (3D Secure) are declined with `payment_declined`; add those funds on the website.",
+        "tags": [
+          "Balance"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-ID",
+            "in": "header",
+            "required": false,
+            "description": "A UUID you choose for this purchase. Repeating a request with the same ID returns the first result instead of charging again, so retry with it after a timeout or a 5xx response. A retry must repeat the same body. Without it, every request is a new purchase.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTopUpRequest"
+              },
+              "examples": {
+                "default card": {
+                  "value": {
+                    "amount_cents": 5000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Card charged and balance credited",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopUpResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "top_up": {
+                        "amount_cents": 5000,
+                        "currency": "usd",
+                        "receipt_url": "https://pay.stripe.com/receipts/example"
+                      },
+                      "balance_cents": 17500
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2455,7 +2775,8 @@
             "type": "array",
             "maxItems": 100,
             "items": { "type": "string", "format": "ipv4" }
-          }
+          },
+          "limit_cents": { "type": "integer", "description": "The daily API card-charge limit." }
         }
       },
       "Error": {
@@ -2476,6 +2797,9 @@
               "quote_expired",
               "request_conflict",
               "kyc_required",
+              "payment_declined",
+              "payment_method_required",
+              "daily_charge_limit_exceeded",
               "rotation_allowance_exhausted",
               "rotation_in_progress",
               "unauthorized",
@@ -2498,6 +2822,278 @@
         "required": ["error"],
         "properties": {
           "error": { "$ref": "#/components/schemas/Error" }
+        }
+      },
+      "TrafficProduct": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "proxy_type",
+          "name",
+          "description",
+          "amount_gb",
+          "price_per_gb_cents",
+          "total_cents",
+          "requires_verification"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proxy_type": {
+            "type": "string",
+            "enum": [
+              "residential",
+              "isp",
+              "datacenter",
+              "mobile"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "amount_gb": {
+            "type": "number",
+            "minimum": 0
+          },
+          "price_per_gb_cents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_cents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "requires_verification": {
+            "type": "boolean",
+            "description": "True when the organization must be verified to buy it."
+          }
+        }
+      },
+      "TrafficProductsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "products"
+        ],
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrafficProduct"
+            }
+          }
+        }
+      },
+      "CreateTrafficOrderRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "product_id"
+        ],
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "TrafficOrderResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "order",
+          "traffic_balance"
+        ],
+        "properties": {
+          "order": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "product_id",
+              "proxy_type",
+              "amount_gb",
+              "price_per_gb_cents",
+              "total_cents",
+              "payment_source"
+            ],
+            "description": "What was recorded and charged.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "product_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "proxy_type": {
+                "type": "string",
+                "enum": [
+                  "residential",
+                  "isp",
+                  "datacenter",
+                  "mobile"
+                ]
+              },
+              "amount_gb": {
+                "type": "number",
+                "minimum": 0
+              },
+              "price_per_gb_cents": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "total_cents": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "payment_source": {
+                "type": "string",
+                "enum": [
+                  "balance"
+                ]
+              }
+            }
+          },
+          "traffic_balance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "proxy_type",
+              "remaining_bytes"
+            ],
+            "properties": {
+              "proxy_type": {
+                "type": "string"
+              },
+              "remaining_bytes": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "PaymentMethod": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "brand",
+          "last4",
+          "exp_month",
+          "exp_year",
+          "is_default"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "last4": {
+            "type": "string"
+          },
+          "exp_month": {
+            "type": "integer"
+          },
+          "exp_year": {
+            "type": "integer"
+          },
+          "is_default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaymentMethodsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "payment_methods"
+        ],
+        "properties": {
+          "payment_methods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            }
+          }
+        }
+      },
+      "CreateTopUpRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "amount_cents"
+        ],
+        "properties": {
+          "amount_cents": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 100000
+          },
+          "payment_method_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "A saved payment method. Defaults to the default card."
+          }
+        }
+      },
+      "TopUpResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "top_up",
+          "balance_cents"
+        ],
+        "properties": {
+          "top_up": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "amount_cents",
+              "currency",
+              "receipt_url"
+            ],
+            "properties": {
+              "amount_cents": {
+                "type": "integer"
+              },
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "usd"
+                ]
+              },
+              "receipt_url": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "balance_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Balance after the top-up."
+          }
         }
       }
     },

@@ -10,6 +10,7 @@ The open-source [DoubleData MCP server](https://github.com/doubledata-proxy/doub
 - "Open this page from a German residential IP and summarize the prices."
 - "Give me 500 US sticky proxies for Playwright as a file."
 - "Download all invoices since January for my accountant."
+- "Add $50 from my card and buy 10 GB of residential traffic."
 
 Reports, invoice PDFs, and proxy lists are saved as files in a local export directory.
 
@@ -24,7 +25,7 @@ npx -y github:doubledata-proxy/doubledata-mcp login
 It opens **Dashboard › Team**, where an organization admin creates an API key. Paste the key at the hidden prompt. The command verifies the key and saves it to `~/.config/doubledata/credentials.json`, readable only by you. You can set `DOUBLEDATA_API_KEY` instead.
 
 <Warning>
-  The agent acts with your organization's API key. It can create credentials, use traffic, and buy Static ISP proxies. Set `DOUBLEDATA_READ_ONLY=true` if the agent should only read.
+  The agent acts with your organization's API key. It can create credentials, use traffic, buy traffic packages and Static ISP proxies, and charge your saved card. Set `DOUBLEDATA_READ_ONLY=true` if the agent should only read.
 </Warning>
 
 ## 2. Add the server to your agent
@@ -86,6 +87,7 @@ The server needs Node.js 20.18 or later.
 | Area | Tools |
 | --- | --- |
 | Account | Overview, balance, usage, and usage export as CSV or JSON |
+| Billing | Traffic packages and prices, buying a package from the balance, saved cards, and adding funds from a saved card |
 | Credentials | List, read, create, and delete credentials; read and set traffic limits |
 | Proxy network | Fetch URLs with country, city, and session targeting; check the exit IP; build connection snippets; export proxy lists |
 | Invoices | List invoices, download one PDF, or download all PDFs with a CSV index |
@@ -96,10 +98,10 @@ The server needs Node.js 20.18 or later.
 | Variable | Effect |
 | --- | --- |
 | `DOUBLEDATA_READ_ONLY=true` | Hides every tool that spends money or traffic or changes the account. |
-| `DOUBLEDATA_TOOLSETS=account,invoices` | Exposes only the listed tool groups: `account`, `credentials`, `proxy`, `invoices`, and `isp`. |
+| `DOUBLEDATA_TOOLSETS=account,invoices` | Exposes only the listed tool groups: `account`, `billing`, `credentials`, `proxy`, `invoices`, and `isp`. |
 | `DOUBLEDATA_OUTPUT_DIR` | Sets where files are saved. The server refuses to write outside it. |
 
-Orders need explicit confirmation, and so do deletions and renewal cancellations. Passwords are masked unless you ask for them. Fetched pages are marked as untrusted content so the agent does not follow instructions embedded in websites. For larger jobs, give the agent its own credential with a [traffic limit](/guides/credentials#limit-traffic).
+Purchases and card charges need explicit confirmation, and so do deletions and renewal cancellations. A card charge is $10 to $1,000, API keys can charge at most $1,000 per organization in 24 hours, and cards that need 3D Secure are declined so you add those funds on the website. Retrying a purchase with the same request ID never charges twice. Passwords are masked unless you ask for them. Fetched pages are marked as untrusted content so the agent does not follow instructions embedded in websites. For larger jobs, give the agent its own credential with a [traffic limit](/guides/credentials#limit-traffic).
 
 ## Without MCP
 
